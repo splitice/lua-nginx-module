@@ -4,6 +4,7 @@ WHOAMI=$(whoami)
 ORIGDIR=$(pwd)
 BASEDIR=$(dirname $0)
 BASEDIR=`cd "${BASEDIR}";pwd`
+NGINX_URL=http://nginx.org/download/$BUILD_NGINX_VERSION.tar.gz
 OPENSSL_URL=http://www.openssl.org/source/$BUILD_OPENSSL_VERSION.tar.gz
 ADDITIONAL_CONFIGURE=""
 
@@ -36,6 +37,7 @@ install_luajit
 cd $OUT
 
 wget $NGINX_URL
+tar -zxvf $BUILD_NGINX_VERSION.tar.gz
 
 wget $OPENSSL_URL
 tar -zxvf $OPENSSL_VERSION.tar.gz
@@ -53,6 +55,7 @@ install_github openresty rds-json-nginx-module "v$BUILD_RDSJSON_VERSION"
 install_github FRiCKLE ngx_coolkit "v$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
 
+cd $BUILD_NGINX_VERSION
 
 export LUAJIT_LIB=/usr/local/lib/
 export LUAJIT_INC=/usr/local/include/luajit-2.0
