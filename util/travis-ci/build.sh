@@ -69,6 +69,6 @@ export LUAJIT_INC=/usr/local/include/luajit-2.0
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module \
 		--with-pcre-jit $ADDITIONAL_CONFIGURE
 
-make
+sudo make install
 
 luarocks install lua-cjson
