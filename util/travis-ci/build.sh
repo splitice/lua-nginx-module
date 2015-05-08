@@ -35,6 +35,8 @@ install_luajit
 
 cd $OUT
 
+wget $NGINX_URL
+
 wget $OPENSSL_URL
 tar -zxvf $OPENSSL_VERSION.tar.gz
 
@@ -43,6 +45,7 @@ install_github openresty set-misc-nginx-module "v$BUILD_SETMISC_VERSION"
 install_github openresty echo-nginx-module "v$BUILD_ECHO_VERSION"
 install_github openresty memc-nginx-module "v$BUILD_MEMC_VERSION"
 install_github openresty srcache-nginx-module "v$BUILD_SRCACHE_VERSION"
+ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$BASEDIR/../../"
 install_github openresty lua-upstream-nginx-module "v$BUILD_LUAUPSTREAM_VERSION"
 install_github openresty headers-more-nginx-module "v$BUILD_HEADERSMORE_VERSION"
 install_github openresty drizzle-nginx-module "v$BUILD_DRIZZLE_VERSION"
@@ -50,11 +53,6 @@ install_github openresty rds-json-nginx-module "v$BUILD_RDSJSON_VERSION"
 install_github FRiCKLE ngx_coolkit "v$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
 
-cd "$BASEDIR/../../"
-CURRENT_DIR=$(pwd)
-echo "Now we are located in $CURRENT_DIR"
-
-make clean
 
 export LUAJIT_LIB=/usr/local/lib/
 export LUAJIT_INC=/usr/local/include/luajit-2.0
@@ -66,7 +64,7 @@ export LUAJIT_INC=/usr/local/include/luajit-2.0
         --with-http_ssl_module --with-http_stub_status_module --with-openssl=$OUT/$OPENSSL_VERSION/ \
         --without-http_uwsgi_module --without-http_scgi_module --without-http_memcached_module \
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module \
-		--with-pcre-jit --add-module="$ORIGDIR" $ADDITIONAL_CONFIGURE
+		--with-pcre-jit $ADDITIONAL_CONFIGURE
 
 make
 
