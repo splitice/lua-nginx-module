@@ -1,8 +1,9 @@
 #!/bin/bash
 
+DIR=$(dirname "$0")
 export OUT=/tmp/nginx_build
 
-bash build.sh
+bash $DIR/build.sh
 
 export PATH=$OUT:$PATH
 
