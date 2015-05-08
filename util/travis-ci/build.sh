@@ -64,7 +64,7 @@ export LUAJIT_INC=/usr/local/include/luajit-2.0
         --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log \
         --pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --http-client-body-temp-path=/var/lib/nginx/body \
         --http-proxy-temp-path=/var/lib/nginx/proxy --http-fastcgi-temp-path=/var/tmp/nginx/fastcgi --with-ipv6 \
-        --with-http_ssl_module --with-http_stub_status_module --with-openssl=$OUT/$OPENSSL_VERSION/ \
+        --with-http_ssl_module --with-http_stub_status_module --with-openssl=$OUT/$BUILD_OPENSSL_VERSION/ \
         --without-http_uwsgi_module --without-http_scgi_module --without-http_memcached_module \
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module \
 		--with-pcre-jit $ADDITIONAL_CONFIGURE
