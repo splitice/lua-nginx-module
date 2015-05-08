@@ -50,8 +50,7 @@ install_github openresty rds-json-nginx-module "v$BUILD_RDSJSON_VERSION"
 install_github FRiCKLE ngx_coolkit "v$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
 
-
-cd $NGINX_VERSION
+cd "$BASEDIR/../../"
 
 make clean
 
