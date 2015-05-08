@@ -26,7 +26,7 @@ function install_github {
 function install_luajit {
 	git clone http://luajit.org/git/luajit-2.0.git
 	cd $OUT/luajit-2.0
-	make
+	sudo make
 	sudo make install
 }
 
@@ -40,7 +40,7 @@ wget $NGINX_URL
 tar -zxvf $BUILD_NGINX_VERSION.tar.gz
 
 wget $OPENSSL_URL
-tar -zxvf $OPENSSL_VERSION.tar.gz
+tar -zxvf $BUILD_OPENSSL_VERSION.tar.gz
 
 install_github simpl ngx_devel_kit "v$BUILD_NGXDEVKIT_VERSION"
 install_github openresty set-misc-nginx-module "v$BUILD_SETMISC_VERSION"
