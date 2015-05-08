@@ -1,0 +1,29 @@
+language: perl
+env:
+  matrix:
+  - BUILD_NGINX_VERSION: nginx-1.9.0
+    BUILD_OPENSSL_VERSION: openssl-1.0.1j
+    BUILD_NGXDEVKIT_VERSION: 0.2.19
+    BUILD_SETMISC_VERSION: 0.28
+    BUILD_ECHO_VERSION: 0.57
+    BUILD_MEMC_VERSION: 0.15
+    BUILD_SRCACHE_VERSION: 0.27
+    BUILD_LUAUPSTREAM_VERSION: 0.02
+    BUILD_HEADERSMORE_VERSION: 0.26
+    BUILD_DRIZZLE_VERSION: 0.1.8
+    BUILD_RDSJSON_VERSION: 0.13
+    BUILD_COOLKIT_VERSION: 0.2rc2
+    BUILD_REDIS2_VERSION: 0.11
+services:
+  - mysql
+  - redis
+  - memcached
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl make build-essential libdrizzle4 libdrizzle-dev
+install:
+ - bash ./util/travis-ci/install.sh
+before_script:
+ - mysql -e 'create database ngx_test; create user ngx_test; grant all on db_name.* to "ngx_test"@"localhost" identified by "ngx_test";'
+script:
+ - prove -I./lib -r t
