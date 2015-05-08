@@ -7,4 +7,4 @@ bash $DIR/build.sh
 
 export PATH=$OUT:$PATH
 
-cpan Test::Nginx
+cpanm Test::Nginx
