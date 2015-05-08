@@ -51,6 +51,8 @@ install_github FRiCKLE ngx_coolkit "v$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
 
 cd "$BASEDIR/../../"
+CURRENT_DIR=$(pwd)
+echo "Now we are located in $CURRENT_DIR"
 
 make clean
 
