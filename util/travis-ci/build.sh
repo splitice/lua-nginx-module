@@ -16,19 +16,23 @@ echo "Compiling into $OUT as $WHOAMI";
 # $3 = tag
 # $4 = if set dont add config options
 function install_github {
-	wget https://github.com/$1/$2/archive/$3.tar.gz
-	tar -zxvf $3.tar.gz
-	if [[ "z$4" == "z" ]]; then
-		ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$3"
+	if [[ ! -d $OUT/$3 ]]; then
+		wget https://github.com/$1/$2/archive/$3.tar.gz
+		tar -zxvf $3.tar.gz
+		if [[ "z$4" == "z" ]]; then
+			ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$3"
+		fi
 	fi
 }
 
 function install_luajit {
-	git clone http://luajit.org/git/luajit-2.0.git
-	cd $OUT/luajit-2.0
-	make
-	sudo make install
-	sudo ldconfig 
+	if [[ ! -d $OUT/luajit-2.0 ]]; then
+		git clone http://luajit.org/git/luajit-2.0.git
+		cd $OUT/luajit-2.0
+		make
+		sudo make install
+		sudo ldconfig 
+	fi
 }
 
 
