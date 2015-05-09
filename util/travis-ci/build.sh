@@ -65,6 +65,7 @@ cd $BUILD_NGINX_VERSION
 export LUAJIT_LIB=/usr/local/lib/
 export LUAJIT_INC=/usr/local/include/luajit-2.0
 
+set -o xtrace
 ./configure --prefix=/usr --conf-path=/etc/nginx/nginx.conf --sbin-path=/usr/sbin \
         --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log \
         --pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --http-client-body-temp-path=/var/lib/nginx/body \
@@ -73,6 +74,7 @@ export LUAJIT_INC=/usr/local/include/luajit-2.0
         --without-http_uwsgi_module --without-http_scgi_module --without-http_memcached_module \
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module \
 		--with-pcre-jit $ADDITIONAL_CONFIGURE
+set +o xtrace
 
 sudo make install
 
