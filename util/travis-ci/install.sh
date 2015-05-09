@@ -5,6 +5,6 @@ export OUT=/tmp/nginx_build
 
 bash $DIR/build.sh
 
-export PATH=$OUT:$PATH
+export PATH=/usr/sbin/:$PATH
 
 cpanm Test::Nginx

@@ -30,12 +30,12 @@ function install_luajit {
 	sudo make install
 }
 
+
 cd $OUT
 
 install_luajit
 
 cd $OUT
-
 wget $NGINX_URL
 tar -zxvf $BUILD_NGINX_VERSION.tar.gz
 
@@ -71,4 +71,4 @@ export LUAJIT_INC=/usr/local/include/luajit-2.0
 
 sudo make install
 
-luarocks install lua-cjson
+sudo luarocks install lua-cjson
