@@ -26,7 +26,7 @@ function install_github {
 function install_luajit {
 	git clone http://luajit.org/git/luajit-2.0.git
 	cd $OUT/luajit-2.0
-	sudo make
+	make
 	sudo make install
 }
 

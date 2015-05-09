@@ -23,6 +23,7 @@ before_install:
   - sudo apt-get install -y libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl build-essential libdrizzle1 libdrizzle0 libdrizzle-dev luarocks
 install:
  - bash ./util/travis-ci/install.sh
+ - nginx -v
 before_script:
  - mysql -uroot -e 'create database ngx_test; create user ngx_test; grant all on ngx_test.* to "ngx_test"@"localhost" identified by "ngx_test";'
 script:
