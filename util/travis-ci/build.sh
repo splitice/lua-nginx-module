@@ -28,6 +28,7 @@ function install_luajit {
 	cd $OUT/luajit-2.0
 	make
 	sudo make install
+	ldconfig 
 }
 
 
