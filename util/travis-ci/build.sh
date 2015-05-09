@@ -57,7 +57,7 @@ install_github openresty lua-upstream-nginx-module "v$BUILD_LUAUPSTREAM_VERSION"
 install_github openresty headers-more-nginx-module "v$BUILD_HEADERSMORE_VERSION"
 install_github openresty drizzle-nginx-module "v$BUILD_DRIZZLE_VERSION"
 install_github openresty rds-json-nginx-module "v$BUILD_RDSJSON_VERSION"
-install_github FRiCKLE ngx_coolkit "v$BUILD_COOLKIT_VERSION"
+install_github FRiCKLE ngx_coolkit "$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
 
 cd $BUILD_NGINX_VERSION
