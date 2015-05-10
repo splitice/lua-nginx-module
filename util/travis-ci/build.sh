@@ -20,7 +20,7 @@ function install_github {
 		wget https://github.com/$1/$2/archive/$3.tar.gz
 		tar -zxvf $3.tar.gz
 		if [[ "z$4" == "z" ]]; then
-			ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$3"
+			ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$2-$3"
 		fi
 	fi
 }
