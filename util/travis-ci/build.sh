@@ -17,10 +17,10 @@ echo "Compiling into $OUT as $WHOAMI";
 # $4 = if set dont add config options
 function install_github {
 	if [[ ! -d $OUT/$3 ]]; then
-		wget https://github.com/$1/$2/archive/$3.tar.gz
-		tar -zxvf $3.tar.gz
+		wget https://github.com/$1/$2/archive/$3$4.tar.gz
+		tar -zxvf $3$4.tar.gz
 		if [[ "z$4" == "z" ]]; then
-			ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$2-$3"
+			ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$OUT/$2-$4"
 		fi
 	fi
 }
@@ -47,18 +47,18 @@ tar -zxvf $BUILD_NGINX_VERSION.tar.gz
 wget $OPENSSL_URL
 tar -zxvf $BUILD_OPENSSL_VERSION.tar.gz
 
-install_github simpl ngx_devel_kit "v$BUILD_NGXDEVKIT_VERSION"
-install_github openresty set-misc-nginx-module "v$BUILD_SETMISC_VERSION"
-install_github openresty echo-nginx-module "v$BUILD_ECHO_VERSION"
-install_github openresty memc-nginx-module "v$BUILD_MEMC_VERSION"
-install_github openresty srcache-nginx-module "v$BUILD_SRCACHE_VERSION"
+install_github simpl ngx_devel_kit v "$BUILD_NGXDEVKIT_VERSION"
+install_github openresty set-misc-nginx-module v "$BUILD_SETMISC_VERSION"
+install_github openresty echo-nginx-module v "$BUILD_ECHO_VERSION"
+install_github openresty memc-nginx-module v "$BUILD_MEMC_VERSION"
+install_github openresty srcache-nginx-module v "$BUILD_SRCACHE_VERSION"
 ADDITIONAL_CONFIGURE="$ADDITIONAL_CONFIGURE --add-module=$BASEDIR/../../"
-install_github openresty lua-upstream-nginx-module "v$BUILD_LUAUPSTREAM_VERSION"
-install_github openresty headers-more-nginx-module "v$BUILD_HEADERSMORE_VERSION"
-install_github openresty drizzle-nginx-module "v$BUILD_DRIZZLE_VERSION"
-install_github openresty rds-json-nginx-module "v$BUILD_RDSJSON_VERSION"
-install_github FRiCKLE ngx_coolkit "$BUILD_COOLKIT_VERSION"
-install_github openresty redis2-nginx-module "v$BUILD_REDIS2_VERSION"
+install_github openresty lua-upstream-nginx-module v "$BUILD_LUAUPSTREAM_VERSION"
+install_github openresty headers-more-nginx-module v "$BUILD_HEADERSMORE_VERSION"
+install_github openresty drizzle-nginx-module v "$BUILD_DRIZZLE_VERSION"
+install_github openresty rds-json-nginx-module v "$BUILD_RDSJSON_VERSION"
+install_github FRiCKLE ngx_coolkit "" "$BUILD_COOLKIT_VERSION"
+install_github openresty redis2-nginx-module v "$BUILD_REDIS2_VERSION"
 
 cd $BUILD_NGINX_VERSION
 
