@@ -16,7 +16,7 @@ echo "Compiling into $OUT as $WHOAMI";
 # $3 = tag
 # $4 = if set dont add config options
 function install_github {
-	if [[ ! -d $OUT/$3 ]]; then
+	if [[ ! -d $OUT/$2-$4 ]]; then
 		wget https://github.com/$1/$2/archive/$3$4.tar.gz
 		tar -zxvf $3$4.tar.gz
 		if [[ "z$5" == "z" ]]; then
