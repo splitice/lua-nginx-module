@@ -3,3 +3,4 @@ cd mockeagain
 make
 strip mockeagain.so
 sudo cp -i mockeagain.so /usr/lib/
+cd ..
