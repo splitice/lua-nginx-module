@@ -66,7 +66,7 @@ export LUAJIT_LIB=/usr/local/lib/
 export LUAJIT_INC=/usr/local/include/luajit-2.0
 
 set -o xtrace
-./configure --prefix=/usr --conf-path=/etc/nginx/nginx.conf --sbin-path=/usr/sbin \
+env LIBDRIZZLE_LIB=/usr/lib/ LIBDRIZZLE_INC=/usr/include/libdrizzle-1.0 ./configure --prefix=/usr --conf-path=/etc/nginx/nginx.conf --sbin-path=/usr/sbin \
         --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log \
         --pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --http-client-body-temp-path=/var/lib/nginx/body \
         --http-proxy-temp-path=/var/lib/nginx/proxy --http-fastcgi-temp-path=/var/tmp/nginx/fastcgi --with-ipv6 \
