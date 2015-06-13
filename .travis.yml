@@ -14,6 +14,7 @@ env:
     BUILD_RDSJSON_VERSION: 0.13
     BUILD_COOLKIT_VERSION: 0.2rc2
     BUILD_REDIS2_VERSION: 0.11
+    BUILD_PCRE_VERSION: 8.36
 services:
   - mysql
   - redis
