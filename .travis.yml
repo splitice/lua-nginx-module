@@ -27,4 +27,4 @@ install:
 before_script:
  - mysql -uroot -e 'create database ngx_test; create user ngx_test; grant all on ngx_test.* to "ngx_test"@"localhost" identified by "ngx_test";'
 script:
- - prove -I./lib -r t
+ - sudo prove -I./lib -r t
