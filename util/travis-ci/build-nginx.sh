@@ -71,7 +71,7 @@ env LIBDRIZZLE_LIB=/usr/lib/ LIBDRIZZLE_INC=/usr/include/libdrizzle-1.0 ./config
         --pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --http-client-body-temp-path=/var/lib/nginx/body \
         --http-proxy-temp-path=/var/lib/nginx/proxy --http-fastcgi-temp-path=/var/tmp/nginx/fastcgi --with-ipv6 \
         --with-http_ssl_module --with-http_stub_status_module --with-openssl=$OUT/$BUILD_OPENSSL_VERSION/ \
-        --without-http_uwsgi_module --without-http_scgi_module --without-http_memcached_module \
+        --without-http_uwsgi_module --without-http_scgi_module --with-poll_module \
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module \
 		--with-pcre-jit --with-http_auth_request_module --with-http_image_filter_module $ADDITIONAL_CONFIGURE
 set +o xtrace
