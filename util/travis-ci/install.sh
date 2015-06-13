@@ -7,4 +7,4 @@ bash $DIR/build.sh
 
 export PATH=/usr/sbin/:$PATH
 
-sudo cpanm Test::Nginx
+sudo /usr/bin/cpanm Test::Nginx # full path required
