@@ -22,7 +22,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl build-essential libdrizzle1 libdrizzle0 libdrizzle-dev luarocks cpanminus libgd2-noxpm libgd2-noxpm-dev
 install:
- - bash ./util/travis-ci/install.sh
+ - bash ./util/travis-ci/install-nginx.sh
  - sudo /usr/bin/cpanm Test::Nginx
  - nginx -v
 before_script:
