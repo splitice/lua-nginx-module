@@ -1,7 +1,7 @@
 language: perl
 env:
   matrix:
-  - BUILD_NGINX_VERSION: nginx-1.9.0
+  - BUILD_NGINX_VERSION: nginx-1.9.2
     BUILD_OPENSSL_VERSION: openssl-1.0.1o
     BUILD_NGXDEVKIT_VERSION: 0.2.19
     BUILD_SETMISC_VERSION: 0.28
