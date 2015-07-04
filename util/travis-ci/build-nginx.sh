@@ -74,6 +74,7 @@ git clone https://github.com/openresty/ngx_openresty.git
 cd $BUILD_NGINX_VERSION
 
 for i in ../ngx_openresty/patches/$BUILD_NGINX_VERSION-*.patch; do
+	echo "Applying patch $i"
 	patch -p1  < "$i"
 done
 
