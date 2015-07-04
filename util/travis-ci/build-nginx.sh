@@ -7,7 +7,7 @@ BASEDIR=`cd "${BASEDIR}";pwd`
 NGINX_URL=http://nginx.org/download/$BUILD_NGINX_VERSION.tar.gz
 OPENSSL_URL=http://www.openssl.org/source/$BUILD_OPENSSL_VERSION.tar.gz
 
-if [[ "" == "8.33" ]]; then
+if [[ "$BUILD_PCRE_VERSION" == "8.33" ]]; then
 	PCRE_URL=http://linux.stanford.edu/pub/exim/pcre/pcre-$BUILD_PCRE_VERSION.tar.bz2 #version too old!
 else
 	PCRE_URL=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$BUILD_PCRE_VERSION.tar.bz2
