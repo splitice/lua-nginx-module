@@ -6,7 +6,12 @@ BASEDIR=$(dirname $0)
 BASEDIR=`cd "${BASEDIR}";pwd`
 NGINX_URL=http://nginx.org/download/$BUILD_NGINX_VERSION.tar.gz
 OPENSSL_URL=http://www.openssl.org/source/$BUILD_OPENSSL_VERSION.tar.gz
-PCRE_URL=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$BUILD_PCRE_VERSION.tar.bz2
+
+if [[ "" == "8.33" ]]; then
+	PCRE_URL=http://linux.stanford.edu/pub/exim/pcre/pcre-$BUILD_PCRE_VERSION.tar.bz2 #version too old!
+else
+	PCRE_URL=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$BUILD_PCRE_VERSION.tar.bz2
+fi
 ADDITIONAL_CONFIGURE=""
 
 mkdir $OUT
@@ -64,7 +69,13 @@ install_github openresty rds-json-nginx-module v "$BUILD_RDSJSON_VERSION"
 install_github FRiCKLE ngx_coolkit "" "$BUILD_COOLKIT_VERSION"
 install_github openresty redis2-nginx-module v "$BUILD_REDIS2_VERSION"
 
+git clone https://github.com/openresty/ngx_openresty.git
+
 cd $BUILD_NGINX_VERSION
+
+for i in ../ngx_openresty/patches/nginx-$BUILD_NGINX_VERSION-*.patch; do
+	patch -p1  < "$i"
+done
 
 export LUAJIT_LIB=/usr/local/lib/
 export LUAJIT_INC=/usr/local/include/luajit-2.0
@@ -78,7 +89,7 @@ env LIBDRIZZLE_LIB=/usr/lib/ LIBDRIZZLE_INC=/usr/include/libdrizzle-1.0 ./config
         --without-http_uwsgi_module --without-http_scgi_module --with-select_module --with-poll_module \
         --with-http_dav_module --with-http_spdy_module --with-http_gunzip_module --with-http_realip_module \
 		--with-http_auth_request_module --with-http_image_filter_module \
-		--with-pcre=$OUT/pcre-$BUILD_PCRE_VERSION --with-pcre-opt="--enable-utf8" --with-pcre-jit \
+		--with-pcre=$OUT/pcre-$BUILD_PCRE_VERSION --with-pcre-conf-opt="--enable-utf8 --enable-unicode-properties --enable-jit" --with-pcre-jit \
 		$ADDITIONAL_CONFIGURE --with-debug
 set +o xtrace
 
