@@ -756,7 +756,6 @@ int
 ngx_http_lua_ffi_ssl_raw_client_addr(ngx_http_request_t *r, char **addr,
     size_t *addrlen, int *addrtype, char **err)
 {
-    ngx_ssl_conn_t       *ssl_conn;
     ngx_connection_t     *c;
     struct sockaddr_in   *sin;
 #if (NGX_HAVE_INET6)
