@@ -753,6 +753,50 @@ failed:
 
 
 int
+ngx_http_lua_ffi_ssl_raw_client_addr(ngx_http_request_t *r, char **addr,
+    size_t *addrlen, int *addrtype, char **err)
+{
+    ngx_ssl_conn_t       *ssl_conn;
+    ngx_connection_t     *c;
+    struct sockaddr_in   *sin;
+#if (NGX_HAVE_INET6)
+    struct sockaddr_in6  *sin6;
+#endif
+
+    if (r->connection == NULL) {
+        *err = "bad request";
+        return NGX_ERROR;
+    }
+
+    c = r->connection;
+    switch (c->sockaddr->sa_family) {
+
+#if (NGX_HAVE_INET6)
+    case AF_INET6:
+        sin6 = (struct sockaddr_in6 *) c->sockaddr;
+        *addrlen = 16;
+        *addr = (char *) &sin6->sin6_addr.s6_addr;
+        *addrtype = NGX_HTTP_LUA_ADDR_TYPE_INET6;
+
+        break;
+#endif
+
+    case AF_INET:
+        sin = (struct sockaddr_in *) c->sockaddr;
+        *addr = (char *) &sin->sin_addr.s_addr;
+        *addrlen = 4;
+        *addrtype = NGX_HTTP_LUA_ADDR_TYPE_INET;
+        break;
+		
+	default:
+		*err = "unknown addr type";
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+
+int
 ngx_http_lua_ffi_ssl_raw_server_addr(ngx_http_request_t *r, char **addr,
     size_t *addrlen, int *addrtype, char **err)
 {
