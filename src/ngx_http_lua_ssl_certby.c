@@ -756,18 +756,26 @@ int
 ngx_http_lua_ffi_ssl_raw_client_addr(ngx_http_request_t *r, char **addr,
     size_t *addrlen, int *addrtype, char **err)
 {
+    ngx_ssl_conn_t       *ssl_conn;
     ngx_connection_t     *c;
     struct sockaddr_in   *sin;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6  *sin6;
 #endif
 
-    if (r->connection == NULL) {
+    if (r->connection == NULL || r->connection->ssl == NULL) {
         *err = "bad request";
         return NGX_ERROR;
     }
 
-    c = r->connection;
+    ssl_conn = r->connection->ssl->connection;
+    if (ssl_conn == NULL) {
+        *err = "bad ssl conn";
+        return NGX_ERROR;
+    }
+
+    c = ngx_ssl_get_connection(ssl_conn);
+	
     switch (c->sockaddr->sa_family) {
 
 #if (NGX_HAVE_INET6)
