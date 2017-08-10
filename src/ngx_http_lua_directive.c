@@ -26,6 +26,9 @@
 #include "ngx_http_lua_shdict.h"
 #include "ngx_http_lua_ssl_certby.h"
 #include "ngx_http_lua_lex.h"
+#include "api/ngx_http_lua_api.h"
+#include "ngx_http_lua_log_ringbuf.h"
+#include "ngx_http_lua_log.h"
 
 
 typedef struct ngx_http_lua_block_parser_ctx_s
@@ -78,13 +81,13 @@ ngx_http_lua_shared_dict(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_lua_shdict_ctx_t  *ctx;
     ssize_t                     size;
 
-    if (lmcf->shm_zones == NULL) {
-        lmcf->shm_zones = ngx_palloc(cf->pool, sizeof(ngx_array_t));
-        if (lmcf->shm_zones == NULL) {
+    if (lmcf->shdict_zones == NULL) {
+        lmcf->shdict_zones = ngx_palloc(cf->pool, sizeof(ngx_array_t));
+        if (lmcf->shdict_zones == NULL) {
             return NGX_CONF_ERROR;
         }
 
-        if (ngx_array_init(lmcf->shm_zones, cf->pool, 2,
+        if (ngx_array_init(lmcf->shdict_zones, cf->pool, 2,
                            sizeof(ngx_shm_zone_t *))
             != NGX_OK)
         {
@@ -120,10 +123,9 @@ ngx_http_lua_shared_dict(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ctx->name = name;
     ctx->main_conf = lmcf;
     ctx->log = &cf->cycle->new_log;
-    ctx->cycle = cf->cycle;
 
-    zone = ngx_shared_memory_add(cf, &name, (size_t) size,
-                                 &ngx_http_lua_module);
+    zone = ngx_http_lua_shared_memory_add(cf, &name, (size_t) size,
+                                          &ngx_http_lua_module);
     if (zone == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -140,7 +142,7 @@ ngx_http_lua_shared_dict(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     zone->init = ngx_http_lua_shdict_init_zone;
     zone->data = ctx;
 
-    zp = ngx_array_push(lmcf->shm_zones);
+    zp = ngx_array_push(lmcf->shdict_zones);
     if (zp == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1697,6 +1699,71 @@ ngx_http_lua_conf_read_lua_token(ngx_conf_t *cf,
     word->len = len;
 
     return rc;
+}
+
+
+char *
+ngx_http_lua_capture_error_log(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf)
+{
+#ifndef HAVE_INTERCEPT_ERROR_LOG_PATCH
+    return "not found: missing the capture error log patch for nginx";
+#else
+    ngx_str_t                     *value;
+    ssize_t                        size;
+    u_char                        *data;
+    ngx_cycle_t                   *cycle;
+    ngx_http_lua_main_conf_t      *lmcf = conf;
+    ngx_http_lua_log_ringbuf_t    *ringbuf;
+
+    value = cf->args->elts;
+    cycle = cf->cycle;
+
+    if (lmcf->requires_capture_log) {
+        return "is duplicate";
+    }
+
+    if (value[1].len == 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid capture error log size \"%V\"",
+                           &value[1]);
+        return NGX_CONF_ERROR;
+    }
+
+    size = ngx_parse_size(&value[1]);
+
+    if (size < NGX_MAX_ERROR_STR) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid capture error log size \"%V\", "
+                           "minimum size is %d", &value[1],
+                           NGX_MAX_ERROR_STR);
+        return NGX_CONF_ERROR;
+    }
+
+    if (cycle->intercept_error_log_handler) {
+        return "capture error log handler has been hooked";
+    }
+
+    ringbuf = (ngx_http_lua_log_ringbuf_t *)
+              ngx_palloc(cf->pool, sizeof(ngx_http_lua_log_ringbuf_t));
+    if (ringbuf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    data = ngx_palloc(cf->pool, size);
+    if (data == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    ngx_http_lua_log_ringbuf_init(ringbuf, data, size);
+
+    lmcf->requires_capture_log = 1;
+    cycle->intercept_error_log_handler = (ngx_log_intercept_pt)
+                                         ngx_http_lua_capture_log_handler;
+    cycle->intercept_error_log_data = ringbuf;
+
+    return NGX_CONF_OK;
+#endif
 }
 
 

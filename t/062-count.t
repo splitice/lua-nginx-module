@@ -259,7 +259,7 @@ n = 10
 POST /test
 hello world
 --- response_body
-n = 4
+n = 5
 --- no_error_log
 [error]
 
@@ -323,7 +323,7 @@ ngx. entry count: 116
 --- request
 GET /test
 --- response_body
-n = 3
+n = 4
 --- no_error_log
 [error]
 
@@ -491,6 +491,6 @@ n = 6
 --- request
 GET /test
 --- response_body
-n = 5
+n = 6
 --- no_error_log
 [error]
