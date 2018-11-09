@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_log.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -13,6 +21,7 @@
 
 #include "ngx_http_lua_log.h"
 #include "ngx_http_lua_util.h"
+
 #include "ngx_http_lua_log_ringbuf.h"
 
 
@@ -57,6 +66,7 @@ ngx_http_lua_ngx_log(lua_State *L)
     lua_remove(L, 1);
 
     return log_wrapper(log, "[lua] ", (ngx_uint_t) level, L);
+
 }
 
 
@@ -320,7 +330,7 @@ ngx_int_t
 ngx_http_lua_capture_log_handler(ngx_log_t *log,
     ngx_uint_t level, u_char *buf, size_t n)
 {
-    ngx_http_lua_log_ringbuf_t  *ringbuf;
+    ngx_http_lua_log_ringbuf_t          *ringbuf;
 
     dd("enter");
 
@@ -345,7 +355,7 @@ int
 ngx_http_lua_ffi_errlog_set_filter_level(int level, u_char *err, size_t *errlen)
 {
 #ifdef HAVE_INTERCEPT_ERROR_LOG_PATCH
-    ngx_http_lua_log_ringbuf_t     *ringbuf;
+    ngx_http_lua_log_ringbuf_t             *ringbuf;
 
     ringbuf = ngx_cycle->intercept_error_log_data;
 
@@ -380,7 +390,7 @@ ngx_http_lua_ffi_errlog_get_msg(char **log, int *loglevel, u_char *err,
 #ifdef HAVE_INTERCEPT_ERROR_LOG_PATCH
     ngx_uint_t           loglen;
 
-    ngx_http_lua_log_ringbuf_t     *ringbuf;
+    ngx_http_lua_log_ringbuf_t             *ringbuf;
 
     ringbuf = ngx_cycle->intercept_error_log_data;
 

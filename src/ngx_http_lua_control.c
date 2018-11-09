@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_control.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -18,6 +26,8 @@
 
 static int ngx_http_lua_ngx_exec(lua_State *L);
 static int ngx_http_lua_ngx_redirect(lua_State *L);
+
+
 static int ngx_http_lua_ngx_exit(lua_State *L);
 static int ngx_http_lua_on_abort(lua_State *L);
 
@@ -262,13 +272,6 @@ ngx_http_lua_ngx_redirect(lua_State *L)
 
     h->hash = ngx_http_lua_location_hash;
 
-#if 0
-    dd("location hash: %lu == %lu",
-       (unsigned long) h->hash,
-       (unsigned long) ngx_hash_key_lc((u_char *) "Location",
-                                       sizeof("Location") - 1));
-#endif
-
     h->value.len = len;
     h->value.data = uri;
     ngx_str_set(&h->key, "Location");
@@ -316,15 +319,16 @@ ngx_http_lua_ngx_exit(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
                                | NGX_HTTP_LUA_CONTEXT_TIMER
-                               | NGX_HTTP_LUA_CONTEXT_HEADER_FILTER
                                | NGX_HTTP_LUA_CONTEXT_BALANCER
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_HEADER_FILTER
                                | NGX_HTTP_LUA_CONTEXT_SSL_SESS_STORE
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+                               );
 
     rc = (ngx_int_t) luaL_checkinteger(L, 1);
 
@@ -392,6 +396,7 @@ ngx_http_lua_ngx_exit(lua_State *L)
         return 0;
     }
 
+
     dd("calling yield");
     return lua_yield(L, 0);
 }
@@ -400,10 +405,10 @@ ngx_http_lua_ngx_exit(lua_State *L)
 static int
 ngx_http_lua_on_abort(lua_State *L)
 {
-    ngx_http_request_t           *r;
-    ngx_http_lua_ctx_t           *ctx;
-    ngx_http_lua_co_ctx_t        *coctx = NULL;
-    ngx_http_lua_loc_conf_t      *llcf;
+    ngx_http_request_t                   *r;
+    ngx_http_lua_ctx_t                   *ctx;
+    ngx_http_lua_co_ctx_t                *coctx = NULL;
+    ngx_http_lua_loc_conf_t              *llcf;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -460,7 +465,7 @@ int
 ngx_http_lua_ffi_exit(ngx_http_request_t *r, int status, u_char *err,
     size_t *errlen)
 {
-    ngx_http_lua_ctx_t       *ctx;
+    ngx_http_lua_ctx_t               *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {

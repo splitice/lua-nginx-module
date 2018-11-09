@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_clfactory.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -298,7 +306,7 @@ enum {
 
 
 typedef struct {
-    ngx_http_lua_clfactory_file_type_e file_type;
+    ngx_http_lua_clfactory_file_type_e         file_type;
 
     int         extraline;
     FILE       *f;
@@ -380,12 +388,12 @@ ngx_http_lua_clfactory_bytecode_prepare(lua_State *L,
 
 #if defined(DDEBUG) && (DDEBUG)
         {
-        dd("==LJ_BT_HEADER==");
-        size_t i;
-        for (i = 0; i < LJ_HEADERSIZE; i++) {
-            dd("%ld: 0x%02X", i, (unsigned)(u_char) lf->begin_code.str[i]);
-        }
-        dd("==LJ_BT_HEADER_END==");
+            dd("==LJ_BT_HEADER==");
+            size_t i;
+            for (i = 0; i < LJ_HEADERSIZE; i++) {
+                dd("%ld: 0x%02X", i, (unsigned)(u_char) lf->begin_code.str[i]);
+            }
+            dd("==LJ_BT_HEADER_END==");
         }
 #endif
 
@@ -617,7 +625,7 @@ ngx_http_lua_clfactory_loadfile(lua_State *L, const char *filename)
     int                         c, status, readstatus;
     ngx_flag_t                  sharp;
 
-    ngx_http_lua_clfactory_file_ctx_t        lf;
+    ngx_http_lua_clfactory_file_ctx_t                lf;
 
     /* index of filename on the stack */
     int                         fname_index;
@@ -746,7 +754,7 @@ ngx_int_t
 ngx_http_lua_clfactory_loadbuffer(lua_State *L, const char *buff,
     size_t size, const char *name)
 {
-    ngx_http_lua_clfactory_buffer_ctx_t     ls;
+    ngx_http_lua_clfactory_buffer_ctx_t             ls;
 
     ls.s = buff;
     ls.size = size;
@@ -767,7 +775,7 @@ ngx_http_lua_clfactory_getF(lua_State *L, void *ud, size_t *size)
 #endif
     size_t                       num;
 
-    ngx_http_lua_clfactory_file_ctx_t        *lf;
+    ngx_http_lua_clfactory_file_ctx_t                *lf;
 
     lf = (ngx_http_lua_clfactory_file_ctx_t *) ud;
 
@@ -842,7 +850,8 @@ ngx_http_lua_clfactory_getF(lua_State *L, void *ud, size_t *size)
 
 
 static int
-ngx_http_lua_clfactory_errfile(lua_State *L, const char *what, int fname_index)
+ngx_http_lua_clfactory_errfile(lua_State *L, const char *what,
+    int fname_index)
 {
     const char      *serr;
     const char      *filename;
@@ -866,7 +875,7 @@ ngx_http_lua_clfactory_errfile(lua_State *L, const char *what, int fname_index)
 static const char *
 ngx_http_lua_clfactory_getS(lua_State *L, void *ud, size_t *size)
 {
-    ngx_http_lua_clfactory_buffer_ctx_t      *ls = ud;
+    ngx_http_lua_clfactory_buffer_ctx_t              *ls = ud;
 
 #ifndef OPENRESTY_LUAJIT
     if (ls->sent_begin == 0) {

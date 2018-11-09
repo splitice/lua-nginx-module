@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_ctx.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -28,8 +36,8 @@ static void ngx_http_lua_ngx_ctx_cleanup(void *data);
 int
 ngx_http_lua_ngx_get_ctx(lua_State *L)
 {
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -73,8 +81,8 @@ ngx_http_lua_ngx_get_ctx(lua_State *L)
 int
 ngx_http_lua_ngx_set_ctx(lua_State *L)
 {
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -134,7 +142,7 @@ ngx_http_lua_ngx_set_ctx_helper(lua_State *L, ngx_http_request_t *r,
 int
 ngx_http_lua_ffi_get_ctx_ref(ngx_http_request_t *r)
 {
-    ngx_http_lua_ctx_t  *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {
@@ -148,7 +156,7 @@ ngx_http_lua_ffi_get_ctx_ref(ngx_http_request_t *r)
 int
 ngx_http_lua_ffi_set_ctx_ref(ngx_http_request_t *r, int ref)
 {
-    ngx_http_lua_ctx_t  *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {
@@ -171,9 +179,9 @@ ngx_http_lua_ngx_ctx_add_cleanup(ngx_http_request_t *r, int ref)
 {
     lua_State                   *L;
     ngx_pool_cleanup_t          *cln;
-    ngx_http_lua_ctx_t          *ctx;
 
-    ngx_http_lua_ngx_ctx_cleanup_data_t    *data;
+    ngx_http_lua_ctx_t                             *ctx;
+    ngx_http_lua_ngx_ctx_cleanup_data_t            *data;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     L = ngx_http_lua_get_lua_vm(r, ctx);
@@ -199,7 +207,7 @@ ngx_http_lua_ngx_ctx_cleanup(void *data)
 {
     lua_State       *L;
 
-    ngx_http_lua_ngx_ctx_cleanup_data_t    *clndata = data;
+    ngx_http_lua_ngx_ctx_cleanup_data_t            *clndata = data;
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
                    "lua release ngx.ctx at ref %d", clndata->ref);

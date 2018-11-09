@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_consts.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -12,6 +20,8 @@
 
 
 void ngx_http_lua_inject_http_consts(lua_State *L);
+
+
 void ngx_http_lua_inject_core_consts(lua_State *L);
 
 

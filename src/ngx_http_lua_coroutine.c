@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_coroutine.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -45,8 +53,8 @@ static const ngx_str_t
 static int
 ngx_http_lua_coroutine_create(lua_State *L)
 {
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -63,22 +71,27 @@ ngx_http_lua_coroutine_create(lua_State *L)
 
 
 int
-ngx_http_lua_coroutine_create_helper(lua_State *L, ngx_http_request_t *r,
-    ngx_http_lua_ctx_t *ctx, ngx_http_lua_co_ctx_t **pcoctx)
+ngx_http_lua_coroutine_create_helper(lua_State *L,
+    ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx,
+    ngx_http_lua_co_ctx_t **pcoctx)
 {
     lua_State                     *vm;  /* the Lua VM */
     lua_State                     *co;  /* new coroutine to be created */
-    ngx_http_lua_co_ctx_t         *coctx; /* co ctx for the new coroutine */
+
+    /* co ctx for the new coroutine */
+    ngx_http_lua_co_ctx_t                 *coctx;
 
     luaL_argcheck(L, lua_isfunction(L, 1) && !lua_iscfunction(L, 1), 1,
                   "Lua function expected");
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
                                | NGX_HTTP_LUA_CONTEXT_TIMER
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+
+                                       );
 
     vm = ngx_http_lua_get_lua_vm(r, ctx);
 
@@ -134,11 +147,11 @@ ngx_http_lua_coroutine_create_helper(lua_State *L, ngx_http_request_t *r,
 static int
 ngx_http_lua_coroutine_resume(lua_State *L)
 {
-    lua_State                   *co;
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *coctx;
-    ngx_http_lua_co_ctx_t       *p_coctx; /* parent co ctx */
+    lua_State                           *co;
+    ngx_http_request_t                  *r;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx;
+    ngx_http_lua_co_ctx_t               *p_coctx; /* parent co ctx */
 
     co = lua_tothread(L, 1);
 
@@ -154,12 +167,13 @@ ngx_http_lua_coroutine_resume(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
                                | NGX_HTTP_LUA_CONTEXT_TIMER
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+                               );
 
     p_coctx = ctx->cur_co_ctx;
     if (p_coctx == NULL) {
@@ -201,9 +215,9 @@ ngx_http_lua_coroutine_resume(lua_State *L)
 static int
 ngx_http_lua_coroutine_yield(lua_State *L)
 {
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *coctx;
+    ngx_http_request_t                  *r;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -215,12 +229,13 @@ ngx_http_lua_coroutine_yield(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
                                | NGX_HTTP_LUA_CONTEXT_TIMER
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+                               );
 
     coctx = ctx->cur_co_ctx;
 
@@ -232,7 +247,8 @@ ngx_http_lua_coroutine_yield(lua_State *L)
         dd("set coroutine to running");
         coctx->parent_co_ctx->co_status = NGX_HTTP_LUA_CO_RUNNING;
 
-        ngx_http_lua_probe_user_coroutine_yield(r, coctx->parent_co_ctx->co, L);
+        ngx_http_lua_probe_user_coroutine_yield(r,
+                                                coctx->parent_co_ctx->co, L);
 
     } else {
         ngx_http_lua_probe_user_coroutine_yield(r, NULL, L);
@@ -377,18 +393,21 @@ ngx_http_lua_coroutine_status(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
                                | NGX_HTTP_LUA_CONTEXT_TIMER
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
+                               | NGX_HTTP_LUA_CONTEXT_ACCESS
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+                               );
 
     coctx = ngx_http_lua_get_co_ctx(co, ctx);
     if (coctx == NULL) {
         lua_pushlstring(L, (const char *)
-                        ngx_http_lua_co_status_names[NGX_HTTP_LUA_CO_DEAD].data,
-                        ngx_http_lua_co_status_names[NGX_HTTP_LUA_CO_DEAD].len);
+                        ngx_http_lua_co_status_names[NGX_HTTP_LUA_CO_DEAD]
+                        .data,
+                        ngx_http_lua_co_status_names[NGX_HTTP_LUA_CO_DEAD]
+                        .len);
         return 1;
     }
 

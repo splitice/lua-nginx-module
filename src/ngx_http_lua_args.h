@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_args.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -12,6 +20,7 @@
 
 
 void ngx_http_lua_inject_req_args_api(lua_State *L);
+
 int ngx_http_lua_parse_args(lua_State *L, u_char *buf, u_char *last, int max);
 
 

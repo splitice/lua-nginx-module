@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_ssl_certby.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -113,10 +121,10 @@ ngx_http_lua_ssl_cert_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
 
 #else
 
-    u_char                      *p;
-    u_char                      *name;
-    ngx_str_t                   *value;
-    ngx_http_lua_srv_conf_t    *lscf = conf;
+    u_char                           *p;
+    u_char                           *name;
+    ngx_str_t                        *value;
+    ngx_http_lua_srv_conf_t          *lscf = conf;
 
     /*  must specify a concrete handler */
     if (cmd->post == NULL) {
@@ -188,21 +196,21 @@ ngx_http_lua_ssl_cert_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
 int
 ngx_http_lua_ssl_cert_handler(ngx_ssl_conn_t *ssl_conn, void *data)
 {
-    lua_State                       *L;
-    ngx_int_t                        rc;
-    ngx_connection_t                *c, *fc;
-    ngx_http_request_t              *r = NULL;
-    ngx_pool_cleanup_t              *cln;
-    ngx_http_connection_t           *hc;
-    ngx_http_lua_srv_conf_t         *lscf;
-    ngx_http_core_loc_conf_t        *clcf;
-    ngx_http_lua_ssl_ctx_t          *cctx;
-    ngx_http_core_srv_conf_t        *cscf;
+    lua_State                          *L;
+    ngx_int_t                           rc;
+    ngx_connection_t                   *c, *fc;
+    ngx_http_request_t                 *r = NULL;
+    ngx_pool_cleanup_t                 *cln;
+    ngx_http_lua_srv_conf_t            *lscf;
+    ngx_http_lua_ssl_ctx_t             *cctx;
+    ngx_http_core_srv_conf_t           *cscf;
+    ngx_http_connection_t              *hc;
+    ngx_http_core_loc_conf_t           *clcf;
 
     c = ngx_ssl_get_connection(ssl_conn);
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "ssl cert: connection reusable: %ud", c->reusable);
+                   "stream ssl cert: connection reusable: %ud", c->reusable);
 
     cctx = ngx_http_lua_ssl_get_ctx(c->ssl->connection);
 
@@ -213,7 +221,8 @@ ngx_http_lua_ssl_cert_handler(ngx_ssl_conn_t *ssl_conn, void *data)
 
         if (cctx->done) {
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                           "lua_certificate_by_lua: cert cb exit code: %d",
+                           "stream lua_certificate_by_lua:"
+                           " cert cb exit code: %d",
                            cctx->exit_code);
 
             dd("lua ssl cert done, finally");
@@ -292,8 +301,8 @@ ngx_http_lua_ssl_cert_handler(ngx_ssl_conn_t *ssl_conn, void *data)
 
     dd("setting cctx");
 
-    if (SSL_set_ex_data(c->ssl->connection, ngx_http_lua_ssl_ctx_index, cctx)
-        == 0)
+    if (SSL_set_ex_data(c->ssl->connection, ngx_http_lua_ssl_ctx_index,
+                        cctx) == 0)
     {
         ngx_ssl_error(NGX_LOG_ALERT, c->log, 0, "SSL_set_ex_data() failed");
         goto failed;
@@ -326,7 +335,8 @@ ngx_http_lua_ssl_cert_handler(ngx_ssl_conn_t *ssl_conn, void *data)
         }
 
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                       "lua_certificate_by_lua: handler return value: %i, "
+                       "stream lua_certificate_by_lua:"
+                       " handler return value: %i, "
                        "cert cb exit code: %d", rc, cctx->exit_code);
 
         c->log->action = "SSL handshaking";
@@ -404,7 +414,7 @@ ngx_http_lua_ssl_cert_done(void *data)
 static void
 ngx_http_lua_ssl_cert_aborted(void *data)
 {
-    ngx_http_lua_ssl_ctx_t      *cctx = data;
+    ngx_http_lua_ssl_ctx_t              *cctx = data;
 
     dd("lua ssl cert done");
 
@@ -414,7 +424,7 @@ ngx_http_lua_ssl_cert_aborted(void *data)
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, cctx->connection->log, 0,
-                   "lua_certificate_by_lua: cert cb aborted");
+                   "stream lua_certificate_by_lua: cert cb aborted");
 
     cctx->aborted = 1;
     cctx->request->connection->ssl = NULL;
@@ -460,11 +470,11 @@ ngx_http_lua_log_ssl_cert_error(ngx_log_t *log, u_char *buf, size_t len)
 static ngx_int_t
 ngx_http_lua_ssl_cert_by_chunk(lua_State *L, ngx_http_request_t *r)
 {
-    int                      co_ref;
-    ngx_int_t                rc;
-    lua_State               *co;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_http_cleanup_t      *cln;
+    int                              co_ref;
+    ngx_int_t                        rc;
+    lua_State                       *co;
+    ngx_http_lua_ctx_t              *ctx;
+    ngx_http_cleanup_t              *cln;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
 
@@ -488,7 +498,8 @@ ngx_http_lua_ssl_cert_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     if (co == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "lua: failed to create new coroutine to handle request");
+                      "stream lua: failed to create new"
+                      " coroutine to handle request");
 
         rc = NGX_ERROR;
         ngx_http_lua_finalize_request(r, rc);
@@ -1319,8 +1330,6 @@ failed:
 
     return NGX_ERROR;
 }
-
-
 #endif  /* NGX_LUA_NO_FFI_API */
 
 

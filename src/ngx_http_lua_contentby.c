@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_contentby.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -28,10 +36,10 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
     ngx_int_t                rc;
     lua_State               *co;
     ngx_event_t             *rev;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_http_cleanup_t      *cln;
 
-    ngx_http_lua_loc_conf_t      *llcf;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_cleanup_t                  *cln;
+    ngx_http_lua_loc_conf_t             *llcf;
 
     dd("content by chunk");
 
@@ -48,6 +56,7 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
         ngx_http_lua_reset_ctx(r, L, ctx);
     }
 
+
     ctx->entered_content_phase = 1;
 
     /*  {{{ new coroutine to handle request */
@@ -58,6 +67,7 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
                       "lua: failed to create new coroutine to handle request");
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
+
     }
 
     /*  move code closure to new coroutine */
@@ -84,6 +94,7 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
         cln = ngx_http_cleanup_add(r, 0);
         if (cln == NULL) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
+
         }
 
         cln->handler = ngx_http_lua_request_cleanup_handler;
@@ -95,6 +106,7 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
     ctx->context = NGX_HTTP_LUA_CONTEXT_CONTENT;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
+
 
     if (llcf->check_client_abort) {
         r->read_event_handler = ngx_http_lua_rd_check_broken_connection;
@@ -140,12 +152,15 @@ ngx_http_lua_content_by_chunk(lua_State *L, ngx_http_request_t *r)
 void
 ngx_http_lua_content_wev_handler(ngx_http_request_t *r)
 {
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_lua_ctx_t                  *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {
         return;
     }
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "lua ngx_http_lua_content_wev_handler");
 
     (void) ctx->resume_handler(r);
 }
@@ -199,7 +214,7 @@ ngx_http_lua_content_handler(ngx_http_request_t *r)
         r->request_body_in_clean_file = 1;
 
         rc = ngx_http_read_client_request_body(r,
-                                        ngx_http_lua_content_phase_post_read);
+                                          ngx_http_lua_content_phase_post_read);
 
         if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
 #if (nginx_version < 1002006) ||                                             \
@@ -225,11 +240,12 @@ ngx_http_lua_content_handler(ngx_http_request_t *r)
 }
 
 
+
 /* post read callback for the content phase */
 static void
 ngx_http_lua_content_phase_post_read(ngx_http_request_t *r)
 {
-    ngx_http_lua_ctx_t  *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
 
@@ -251,14 +267,16 @@ ngx_http_lua_content_handler_file(ngx_http_request_t *r)
     lua_State                       *L;
     ngx_int_t                        rc;
     u_char                          *script_path;
-    ngx_http_lua_loc_conf_t         *llcf;
     ngx_str_t                        eval_src;
+
+    ngx_http_lua_loc_conf_t                 *llcf;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
     if (ngx_http_complex_value(r, &llcf->content_src, &eval_src) != NGX_OK) {
         return NGX_ERROR;
     }
+
 
     script_path = ngx_http_lua_rebase_path(r->pool, eval_src.data,
                                            eval_src.len);
@@ -292,7 +310,8 @@ ngx_http_lua_content_handler_inline(ngx_http_request_t *r)
 {
     lua_State                   *L;
     ngx_int_t                    rc;
-    ngx_http_lua_loc_conf_t     *llcf;
+
+    ngx_http_lua_loc_conf_t             *llcf;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
@@ -307,6 +326,7 @@ ngx_http_lua_content_handler_inline(ngx_http_request_t *r)
                                        llcf->content_chunkname);
     if (rc != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
+
     }
 
     return ngx_http_lua_content_by_chunk(L, r);
@@ -314,11 +334,12 @@ ngx_http_lua_content_handler_inline(ngx_http_request_t *r)
 
 
 ngx_int_t
-ngx_http_lua_content_run_posted_threads(lua_State *L, ngx_http_request_t *r,
-    ngx_http_lua_ctx_t *ctx, int n)
+ngx_http_lua_content_run_posted_threads(lua_State *L,
+    ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx, int n)
 {
     ngx_int_t                        rc;
-    ngx_http_lua_posted_thread_t    *pt;
+
+    ngx_http_lua_posted_thread_t            *pt;
 
     dd("run posted threads: %p", ctx->posted_threads);
 

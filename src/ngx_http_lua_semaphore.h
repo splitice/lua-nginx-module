@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_semaphore.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  * Copyright (C) cuiweixie
  * I hereby assign copyright in this code to the lua-nginx-module project,
@@ -15,29 +23,29 @@
 
 
 typedef struct ngx_http_lua_sema_mm_block_s {
-    ngx_uint_t                       used;
-    ngx_http_lua_sema_mm_t          *mm;
-    ngx_uint_t                       epoch;
+    ngx_uint_t                               used;
+    ngx_http_lua_sema_mm_t                  *mm;
+    ngx_uint_t                               epoch;
 } ngx_http_lua_sema_mm_block_t;
 
 
 struct ngx_http_lua_sema_mm_s {
-    ngx_queue_t                  free_queue;
-    ngx_uint_t                   total;
-    ngx_uint_t                   used;
-    ngx_uint_t                   num_per_block;
-    ngx_uint_t                   cur_epoch;
-    ngx_http_lua_main_conf_t    *lmcf;
+    ngx_queue_t                          free_queue;
+    ngx_uint_t                           total;
+    ngx_uint_t                           used;
+    ngx_uint_t                           num_per_block;
+    ngx_uint_t                           cur_epoch;
+    ngx_http_lua_main_conf_t            *lmcf;
 };
 
 
 typedef struct ngx_http_lua_sema_s {
-    ngx_queue_t                          wait_queue;
-    ngx_queue_t                          chain;
-    ngx_event_t                          sem_event;
-    ngx_http_lua_sema_mm_block_t        *block;
-    int                                  resource_count;
-    unsigned                             wait_count;
+    ngx_queue_t                                  wait_queue;
+    ngx_queue_t                                  chain;
+    ngx_event_t                                  sem_event;
+    ngx_http_lua_sema_mm_block_t                *block;
+    int                                          resource_count;
+    unsigned                                     wait_count;
 } ngx_http_lua_sema_t;
 
 

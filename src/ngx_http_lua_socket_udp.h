@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_socket_udp.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -34,26 +42,27 @@ typedef struct {
 
 
 struct ngx_http_lua_socket_udp_upstream_s {
-    ngx_http_lua_socket_udp_retval_handler          prepare_retvals;
-    ngx_http_lua_socket_udp_upstream_handler_pt     read_event_handler;
+    ngx_http_lua_socket_udp_retval_handler                  prepare_retvals;
+    ngx_http_lua_socket_udp_upstream_handler_pt             read_event_handler;
 
-    ngx_http_lua_loc_conf_t         *conf;
-    ngx_http_cleanup_pt             *cleanup;
-    ngx_http_request_t              *request;
-    ngx_http_lua_udp_connection_t    udp_connection;
+    ngx_http_lua_loc_conf_t                 *conf;
+    ngx_http_cleanup_pt                     *cleanup;
+    ngx_http_request_t                      *request;
+    ngx_http_lua_udp_connection_t            udp_connection;
 
-    ngx_msec_t                       read_timeout;
+    ngx_msec_t                               read_timeout;
 
-    ngx_http_upstream_resolved_t    *resolved;
+    ngx_http_upstream_resolved_t            *resolved;
 
-    ngx_uint_t                       ft_type;
-    ngx_err_t                        socket_errno;
-    size_t                           received; /* for receive */
-    size_t                           recv_buf_size;
+    ngx_uint_t                               ft_type;
+    ngx_err_t                                socket_errno;
+    size_t                                   received; /* for receive */
+    size_t                                   recv_buf_size;
 
-    ngx_http_lua_co_ctx_t           *co_ctx;
+    ngx_http_lua_co_ctx_t                   *co_ctx;
 
-    unsigned                         waiting; /* :1 */
+    unsigned                                 waiting:1;
+    unsigned                                 raw_downstream:1;
 };
 
 

@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_time.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -187,7 +195,7 @@ ngx_http_lua_ngx_parse_http_time(lua_State *L)
 static int
 ngx_http_lua_ngx_req_start_time(lua_State *L)
 {
-    ngx_http_request_t  *r;
+    ngx_http_request_t          *r;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -195,6 +203,7 @@ ngx_http_lua_ngx_req_start_time(lua_State *L)
     }
 
     lua_pushnumber(L, (lua_Number) (r->start_sec + r->start_msec / 1000.0L));
+
     return 1;
 }
 
@@ -248,7 +257,6 @@ ngx_http_lua_inject_req_time_api(lua_State *L)
 }
 
 
-#ifndef NGX_LUA_NO_FFI_API
 double
 ngx_http_lua_ffi_now(void)
 {
@@ -343,7 +351,6 @@ ngx_http_lua_ffi_parse_http_time(const u_char *str, size_t len,
     /* ngx_http_parse_time doesn't modify 'str' actually */
     *time = ngx_http_parse_time((u_char *) str, len);
 }
-#endif /* NGX_LUA_NO_FFI_API */
 
 
 /* vi:set ft=c ts=4 sw=4 et fdm=marker: */

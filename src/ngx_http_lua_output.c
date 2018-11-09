@@ -1,3 +1,11 @@
+
+/*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_output.c.tt2
+ */
+
 #ifndef DDEBUG
 #define DDEBUG 0
 #endif
@@ -14,7 +22,9 @@ static int ngx_http_lua_ngx_say(lua_State *L);
 static int ngx_http_lua_ngx_print(lua_State *L);
 static int ngx_http_lua_ngx_flush(lua_State *L);
 static int ngx_http_lua_ngx_eof(lua_State *L);
+
 static int ngx_http_lua_ngx_send_headers(lua_State *L);
+
 static int ngx_http_lua_ngx_echo(lua_State *L, unsigned newline);
 static void ngx_http_lua_flush_cleanup(void *data);
 
@@ -333,7 +343,8 @@ ngx_http_lua_calc_strlen_in_table(lua_State *L, int index, int arg_i,
 
             case LUA_TTABLE:
 
-                size += ngx_http_lua_calc_strlen_in_table(L, -1, arg_i, strict);
+                size += ngx_http_lua_calc_strlen_in_table(L, -1, arg_i,
+                                                          strict);
                 break;
 
             case LUA_TLIGHTUSERDATA:
@@ -461,8 +472,10 @@ ngx_http_lua_ngx_flush(lua_State *L)
     int                          n;
     unsigned                     wait = 0;
     ngx_event_t                 *wev;
-    ngx_http_core_loc_conf_t    *clcf;
-    ngx_http_lua_co_ctx_t       *coctx;
+
+    ngx_http_core_loc_conf_t    *cllscf;
+
+    ngx_http_lua_co_ctx_t               *coctx;
 
     n = lua_gettop(L);
     if (n > 1) {
@@ -567,13 +580,15 @@ ngx_http_lua_ngx_flush(lua_State *L)
             r->write_event_handler = ngx_http_core_run_phases;
         }
 
-        clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+        cllscf = ngx_http_get_module_loc_conf(r->main, ngx_http_core_module);
+
 
         if (!wev->delayed) {
-            ngx_add_timer(wev, clcf->send_timeout);
+            ngx_add_timer(wev, cllscf->send_timeout);
         }
 
-        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+
+        if (ngx_handle_write_event(wev, cllscf->send_lowat) != NGX_OK) {
             if (wev->timer_set) {
                 wev->delayed = 0;
                 ngx_del_timer(wev);
@@ -605,9 +620,9 @@ ngx_http_lua_ngx_flush(lua_State *L)
 static int
 ngx_http_lua_ngx_eof(lua_State *L)
 {
-    ngx_http_request_t      *r;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_int_t                rc;
+    ngx_http_request_t          *r;
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_int_t                    rc;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -719,7 +734,8 @@ ngx_http_lua_ngx_send_headers(lua_State *L)
 
 
 ngx_int_t
-ngx_http_lua_flush_resume_helper(ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx)
+ngx_http_lua_flush_resume_helper(ngx_http_request_t *r,
+    ngx_http_lua_ctx_t *ctx)
 {
     int                          n;
     lua_State                   *vm;
@@ -779,10 +795,10 @@ ngx_http_lua_flush_resume_helper(ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx)
 static void
 ngx_http_lua_flush_cleanup(void *data)
 {
-    ngx_http_request_t                      *r;
-    ngx_event_t                             *wev;
-    ngx_http_lua_ctx_t                      *ctx;
-    ngx_http_lua_co_ctx_t                   *coctx = data;
+    ngx_http_request_t                  *r;
+    ngx_event_t                         *wev;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx = data;
 
     coctx->flushing = 0;
 

@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_initworkerby.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -14,6 +22,7 @@
 #include "ngx_http_lua_util.h"
 
 
+
 static u_char *ngx_http_lua_log_init_worker_error(ngx_log_t *log,
     u_char *buf, size_t len);
 
@@ -21,23 +30,26 @@ static u_char *ngx_http_lua_log_init_worker_error(ngx_log_t *log,
 ngx_int_t
 ngx_http_lua_init_worker(ngx_cycle_t *cycle)
 {
-    char                        *rv;
-    void                        *cur, *prev;
-    ngx_uint_t                   i;
-    ngx_conf_t                   conf;
-    ngx_conf_file_t              cf_file;
-    ngx_cycle_t                 *fake_cycle;
-    ngx_module_t               **modules;
-    ngx_open_file_t             *file, *ofile;
-    ngx_list_part_t             *part;
-    ngx_connection_t            *c = NULL;
-    ngx_http_module_t           *module;
-    ngx_http_request_t          *r = NULL;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_conf_ctx_t         *conf_ctx, http_ctx;
-    ngx_http_lua_loc_conf_t     *top_llcf;
-    ngx_http_lua_main_conf_t    *lmcf;
-    ngx_http_core_loc_conf_t    *clcf, *top_clcf;
+    char                            *rv;
+    void                            *cur, *prev;
+    ngx_uint_t                       i;
+    ngx_conf_t                       conf;
+    ngx_cycle_t                     *fake_cycle;
+    ngx_module_t                   **modules;
+    ngx_open_file_t                 *file, *ofile;
+    ngx_list_part_t                 *part;
+    ngx_connection_t                *c = NULL;
+    ngx_http_module_t               *module;
+    ngx_http_request_t              *r = NULL;
+    ngx_http_lua_ctx_t              *ctx;
+    ngx_http_conf_ctx_t             *conf_ctx, http_ctx;
+
+    ngx_http_lua_main_conf_t            *lmcf;
+
+
+    ngx_http_core_loc_conf_t      *clcf, *top_clcf;
+    ngx_http_lua_loc_conf_t       *top_llcf;
+
 
     lmcf = ngx_http_cycle_get_module_main_conf(cycle, ngx_http_lua_module);
 
@@ -54,8 +66,6 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
 #   endif
        )
     {
-        /* disable init_worker_by_lua* and destroy lua VM in cache processes */
-
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
                        "lua close the global Lua VM %p in the "
                        "cache helper process %P", lmcf->lua, ngx_pid);
@@ -71,11 +81,13 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
         return NGX_OK;
     }
 
-    conf_ctx = (ngx_http_conf_ctx_t *) cycle->conf_ctx[ngx_http_module.index];
+    conf_ctx = (ngx_http_conf_ctx_t *)
+               cycle->conf_ctx[ngx_http_module.index];
     http_ctx.main_conf = conf_ctx->main_conf;
 
     top_clcf = conf_ctx->loc_conf[ngx_http_core_module.ctx_index];
     top_llcf = conf_ctx->loc_conf[ngx_http_lua_module.ctx_index];
+
 
     ngx_memzero(&conf, sizeof(ngx_conf_t));
 
@@ -162,14 +174,11 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
         goto failed;
     }
 
+
     conf.ctx = &http_ctx;
     conf.cycle = fake_cycle;
     conf.pool = fake_cycle->pool;
     conf.log = cycle->log;
-
-    ngx_memzero(&cf_file, sizeof(cf_file));
-    cf_file.file.name = cycle->conf_file;
-    conf.conf_file = &cf_file;
 
     http_ctx.loc_conf = ngx_pcalloc(conf.pool,
                                     sizeof(void *) * ngx_http_max_module);
@@ -203,6 +212,7 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
             }
 
             http_ctx.srv_conf[modules[i]->ctx_index] = cur;
+
 
             if (module->merge_srv_conf) {
                 prev = module->create_srv_conf(&conf);
@@ -268,6 +278,7 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+
 #if defined(nginx_version) && nginx_version >= 1003014
 
 #   if nginx_version >= 1009000
@@ -294,6 +305,7 @@ ngx_http_lua_init_worker(ngx_cycle_t *cycle)
     if (ctx == NULL) {
         goto failed;
     }
+
 
     ctx->context = NGX_HTTP_LUA_CONTEXT_INIT_WORKER;
     ctx->cur_co_ctx = NULL;
@@ -335,8 +347,8 @@ ngx_http_lua_init_worker_by_inline(ngx_log_t *log,
 
 
 ngx_int_t
-ngx_http_lua_init_worker_by_file(ngx_log_t *log, ngx_http_lua_main_conf_t *lmcf,
-    lua_State *L)
+ngx_http_lua_init_worker_by_file(ngx_log_t *log,
+    ngx_http_lua_main_conf_t *lmcf, lua_State *L)
 {
     int         status;
 

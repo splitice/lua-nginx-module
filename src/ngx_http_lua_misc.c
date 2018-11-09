@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_misc.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -18,6 +26,7 @@
 
 static int ngx_http_lua_ngx_get(lua_State *L);
 static int ngx_http_lua_ngx_set(lua_State *L);
+
 static int ngx_http_lua_ngx_req_is_internal(lua_State *L);
 
 
@@ -45,7 +54,7 @@ ngx_http_lua_inject_req_misc_api(lua_State *L)
 static int
 ngx_http_lua_ngx_req_is_internal(lua_State *L)
 {
-    ngx_http_request_t  *r;
+    ngx_http_request_t      *r;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -99,6 +108,7 @@ ngx_http_lua_ngx_get(lua_State *L)
         } else {
             status = 0;
         }
+
 
         lua_pushinteger(L, status);
         return 1;
@@ -273,7 +283,7 @@ ngx_http_lua_ffi_is_subrequest(ngx_http_request_t *r)
 int
 ngx_http_lua_ffi_headers_sent(ngx_http_request_t *r)
 {
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_lua_ctx_t                  *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {

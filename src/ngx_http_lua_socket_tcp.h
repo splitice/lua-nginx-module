@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_socket_tcp.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -52,23 +60,24 @@ typedef struct {
 
 
 struct ngx_http_lua_socket_tcp_upstream_s {
-    ngx_http_lua_socket_tcp_retval_handler          read_prepare_retvals;
-    ngx_http_lua_socket_tcp_retval_handler          write_prepare_retvals;
-    ngx_http_lua_socket_tcp_upstream_handler_pt     read_event_handler;
-    ngx_http_lua_socket_tcp_upstream_handler_pt     write_event_handler;
+    ngx_http_lua_socket_tcp_retval_handler              read_prepare_retvals;
+    ngx_http_lua_socket_tcp_retval_handler              write_prepare_retvals;
+    ngx_http_lua_socket_tcp_upstream_handler_pt         read_event_handler;
+    ngx_http_lua_socket_tcp_upstream_handler_pt         write_event_handler;
 
-    ngx_http_lua_socket_pool_t      *socket_pool;
+    ngx_http_lua_socket_pool_t              *socket_pool;
 
-    ngx_http_lua_loc_conf_t         *conf;
-    ngx_http_cleanup_pt             *cleanup;
-    ngx_http_request_t              *request;
+    ngx_http_lua_loc_conf_t                 *conf;
+    ngx_http_cleanup_pt                     *cleanup;
+    ngx_http_request_t                      *request;
+
     ngx_peer_connection_t            peer;
 
     ngx_msec_t                       read_timeout;
     ngx_msec_t                       send_timeout;
     ngx_msec_t                       connect_timeout;
 
-    ngx_http_upstream_resolved_t    *resolved;
+    ngx_http_upstream_resolved_t            *resolved;
 
     ngx_chain_t                     *bufs_in; /* input data buffers */
     ngx_chain_t                     *buf_in; /* last input data buffer */
@@ -85,8 +94,8 @@ struct ngx_http_lua_socket_tcp_upstream_s {
     size_t                           request_len;
     ngx_chain_t                     *request_bufs;
 
-    ngx_http_lua_co_ctx_t           *read_co_ctx;
-    ngx_http_lua_co_ctx_t           *write_co_ctx;
+    ngx_http_lua_co_ctx_t                   *read_co_ctx;
+    ngx_http_lua_co_ctx_t                   *write_co_ctx;
 
     ngx_uint_t                       reused;
 
@@ -115,25 +124,25 @@ typedef struct ngx_http_lua_dfa_edge_s  ngx_http_lua_dfa_edge_t;
 
 
 struct ngx_http_lua_dfa_edge_s {
-    u_char                           chr;
-    int                              new_state;
     ngx_http_lua_dfa_edge_t         *next;
+    int                              new_state;
+    u_char                           chr;
 };
 
 
 typedef struct {
-    ngx_http_lua_socket_tcp_upstream_t  *upstream;
+    ngx_http_lua_socket_tcp_upstream_t          *upstream;
 
     ngx_str_t                            pattern;
-    int                                  state;
     ngx_http_lua_dfa_edge_t            **recovering;
+    int                                  state;
 
     unsigned                             inclusive:1;
 } ngx_http_lua_socket_compiled_pattern_t;
 
 
 typedef struct {
-    ngx_http_lua_socket_pool_t      *socket_pool;
+    ngx_http_lua_socket_pool_t              *socket_pool;
 
     ngx_queue_t                      queue;
     ngx_connection_t                *connection;
@@ -147,8 +156,8 @@ typedef struct {
 
 
 void ngx_http_lua_inject_socket_tcp_api(ngx_log_t *log, lua_State *L);
-void ngx_http_lua_inject_req_socket_api(lua_State *L);
 void ngx_http_lua_cleanup_conn_pools(lua_State *L);
+int ngx_http_lua_req_socket_tcp(lua_State *L);
 
 
 #endif /* _NGX_HTTP_LUA_SOCKET_TCP_H_INCLUDED_ */

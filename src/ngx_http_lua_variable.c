@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_variable.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -51,14 +59,14 @@ ngx_http_lua_var_get(lua_State *L)
     size_t                       len;
     ngx_uint_t                   hash;
     ngx_str_t                    name;
-    ngx_http_variable_value_t   *vv;
-
 #if (NGX_PCRE)
     u_char                      *val;
     ngx_uint_t                   n;
     LUA_NUMBER                   index;
     int                         *cap;
 #endif
+
+    ngx_http_variable_value_t           *vv;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -139,9 +147,6 @@ ngx_http_lua_var_get(lua_State *L)
 static int
 ngx_http_lua_var_set(lua_State *L)
 {
-    ngx_http_variable_t         *v;
-    ngx_http_variable_value_t   *vv;
-    ngx_http_core_main_conf_t   *cmcf;
     u_char                      *p, *lowcase, *val;
     size_t                       len;
     ngx_str_t                    name;
@@ -149,6 +154,10 @@ ngx_http_lua_var_set(lua_State *L)
     ngx_http_request_t          *r;
     int                          value_type;
     const char                  *msg;
+
+    ngx_http_variable_t                 *v;
+    ngx_http_variable_value_t           *vv;
+    ngx_http_core_main_conf_t           *cmcf;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -221,7 +230,8 @@ ngx_http_lua_var_set(lua_State *L)
 
             dd("set variables with set_handler");
 
-            vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t));
+            vv = ngx_palloc(r->pool,
+                            sizeof(ngx_http_variable_value_t));
             if (vv == NULL) {
                 return luaL_error(L, "no memory");
             }
@@ -294,13 +304,13 @@ ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
 {
     ngx_uint_t                   hash;
     ngx_str_t                    name;
-    ngx_http_variable_value_t   *vv;
-
 #if (NGX_PCRE)
     u_char                      *p;
     ngx_uint_t                   n;
     int                         *cap;
 #endif
+
+    ngx_http_variable_value_t           *vv;
 
     if (r == NULL) {
         *err = "no request object found";
@@ -351,6 +361,7 @@ ngx_http_lua_ffi_var_get(ngx_http_request_t *r, u_char *name_data,
     dd("variable name: %.*s", (int) name_len, lowcase_buf);
 
     vv = ngx_http_get_variable(r, &name, hash);
+
     if (vv == NULL || vv->not_found) {
         return NGX_DECLINED;
     }
@@ -368,9 +379,10 @@ ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
 {
     u_char                      *p;
     ngx_uint_t                   hash;
-    ngx_http_variable_t         *v;
-    ngx_http_variable_value_t   *vv;
-    ngx_http_core_main_conf_t   *cmcf;
+
+    ngx_http_variable_t                 *v;
+    ngx_http_variable_value_t           *vv;
+    ngx_http_core_main_conf_t           *cmcf;
 
     if (r == NULL) {
         *errlen = ngx_snprintf(errbuf, *errlen, "no request object found")
@@ -410,7 +422,8 @@ ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
             dd("set variables with set_handler");
 
             if (value != NULL && value_len) {
-                vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t)
+                vv = ngx_palloc(r->pool,
+                                sizeof(ngx_http_variable_value_t)
                                 + value_len);
                 if (vv == NULL) {
                     goto nomem;
@@ -421,7 +434,8 @@ ngx_http_lua_ffi_var_set(ngx_http_request_t *r, u_char *name_data,
                 value = p;
 
             } else {
-                vv = ngx_palloc(r->pool, sizeof(ngx_http_variable_value_t));
+                vv = ngx_palloc(r->pool,
+                                sizeof(ngx_http_variable_value_t));
                 if (vv == NULL) {
                     goto nomem;
                 }

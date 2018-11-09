@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_semaphore.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  * Copyright (C) cuiweixie
  * I hereby assign copyright in this code to the lua-nginx-module project,
@@ -47,7 +55,7 @@ enum {
 ngx_int_t
 ngx_http_lua_sema_mm_init(ngx_conf_t *cf, ngx_http_lua_main_conf_t *lmcf)
 {
-    ngx_http_lua_sema_mm_t *mm;
+    ngx_http_lua_sema_mm_t         *mm;
 
     mm = ngx_palloc(cf->pool, sizeof(ngx_http_lua_sema_mm_t));
     if (mm == NULL) {
@@ -74,12 +82,12 @@ ngx_http_lua_sema_mm_init(ngx_conf_t *cf, ngx_http_lua_main_conf_t *lmcf)
 static ngx_http_lua_sema_t *
 ngx_http_lua_alloc_sema(void)
 {
-    ngx_uint_t                           i, n;
-    ngx_queue_t                         *q;
-    ngx_http_lua_sema_t                 *sem, *iter;
-    ngx_http_lua_sema_mm_t              *mm;
-    ngx_http_lua_main_conf_t            *lmcf;
-    ngx_http_lua_sema_mm_block_t        *block;
+    ngx_uint_t                                   i, n;
+    ngx_queue_t                                 *q;
+    ngx_http_lua_sema_t                         *sem, *iter;
+    ngx_http_lua_sema_mm_t                      *mm;
+    ngx_http_lua_main_conf_t                    *lmcf;
+    ngx_http_lua_sema_mm_block_t                *block;
 
     ngx_http_lua_assert(ngx_cycle && ngx_cycle->conf_ctx);
 
@@ -156,12 +164,12 @@ ngx_http_lua_alloc_sema(void)
 void
 ngx_http_lua_sema_mm_cleanup(void *data)
 {
-    ngx_uint_t                           i;
-    ngx_queue_t                         *q;
-    ngx_http_lua_sema_t                 *sem, *iter;
-    ngx_http_lua_sema_mm_t              *mm;
-    ngx_http_lua_main_conf_t            *lmcf;
-    ngx_http_lua_sema_mm_block_t        *block;
+    ngx_uint_t                               i;
+    ngx_queue_t                             *q;
+    ngx_http_lua_sema_t                     *sem, *iter;
+    ngx_http_lua_sema_mm_t                  *mm;
+    ngx_http_lua_main_conf_t                *lmcf;
+    ngx_http_lua_sema_mm_block_t            *block;
 
     lmcf = (ngx_http_lua_main_conf_t *) data;
     mm = lmcf->sema_mm;
@@ -201,10 +209,10 @@ ngx_http_lua_sema_mm_cleanup(void *data)
 static void
 ngx_http_lua_free_sema(ngx_http_lua_sema_t *sem)
 {
-    ngx_http_lua_sema_t            *iter;
-    ngx_uint_t                      i, mid_epoch;
-    ngx_http_lua_sema_mm_block_t   *block;
-    ngx_http_lua_sema_mm_t         *mm;
+    ngx_http_lua_sema_t                    *iter;
+    ngx_uint_t                              i, mid_epoch;
+    ngx_http_lua_sema_mm_block_t           *block;
+    ngx_http_lua_sema_mm_t                 *mm;
 
     block = sem->block;
     block->used--;
@@ -255,11 +263,11 @@ ngx_http_lua_free_sema(ngx_http_lua_sema_t *sem)
 static ngx_int_t
 ngx_http_lua_sema_resume(ngx_http_request_t *r)
 {
-    lua_State                   *vm;
-    ngx_connection_t            *c;
-    ngx_int_t                    rc;
-    ngx_uint_t                   nreqs;
-    ngx_http_lua_ctx_t          *ctx;
+    lua_State                           *vm;
+    ngx_connection_t                    *c;
+    ngx_int_t                            rc;
+    ngx_uint_t                           nreqs;
+    ngx_http_lua_ctx_t                  *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {
@@ -310,7 +318,7 @@ int
 ngx_http_lua_ffi_sema_new(ngx_http_lua_sema_t **psem,
     int n, char **errmsg)
 {
-    ngx_http_lua_sema_t    *sem;
+    ngx_http_lua_sema_t            *sem;
 
     sem = ngx_http_lua_alloc_sema();
     if (sem == NULL) {
@@ -357,9 +365,9 @@ int
 ngx_http_lua_ffi_sema_wait(ngx_http_request_t *r,
     ngx_http_lua_sema_t *sem, int wait_ms, u_char *err, size_t *errlen)
 {
-    ngx_http_lua_ctx_t           *ctx;
-    ngx_http_lua_co_ctx_t        *wait_co_ctx;
-    ngx_int_t                     rc;
+    ngx_http_lua_ctx_t                   *ctx;
+    ngx_http_lua_co_ctx_t                *wait_co_ctx;
+    ngx_int_t                             rc;
 
     ngx_log_debug4(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
                    "http lua semaphore wait: %p, timeout: %d, "
@@ -378,11 +386,11 @@ ngx_http_lua_ffi_sema_wait(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-    rc = ngx_http_lua_ffi_check_context(ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+    rc = ngx_http_lua_ffi_check_context(ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
+                                        | NGX_HTTP_LUA_CONTEXT_REWRITE
                                         | NGX_HTTP_LUA_CONTEXT_ACCESS
-                                        | NGX_HTTP_LUA_CONTEXT_CONTENT
-                                        | NGX_HTTP_LUA_CONTEXT_TIMER
-                                        | NGX_HTTP_LUA_CONTEXT_SSL_CERT,
+                                        | NGX_HTTP_LUA_CONTEXT_SSL_CERT
+                                        | NGX_HTTP_LUA_CONTEXT_TIMER,
                                         err, errlen);
 
     if (rc != NGX_OK) {
@@ -436,9 +444,9 @@ ngx_http_lua_ffi_sema_count(ngx_http_lua_sema_t *sem)
 static void
 ngx_http_lua_sema_cleanup(void *data)
 {
-    ngx_http_lua_co_ctx_t          *coctx = data;
-    ngx_queue_t                    *q;
-    ngx_http_lua_sema_t            *sem;
+    ngx_http_lua_co_ctx_t                  *coctx = data;
+    ngx_queue_t                            *q;
+    ngx_http_lua_sema_t                    *sem;
 
     sem = coctx->data;
 
@@ -460,12 +468,12 @@ ngx_http_lua_sema_cleanup(void *data)
 static void
 ngx_http_lua_sema_handler(ngx_event_t *ev)
 {
-    ngx_http_lua_sema_t         *sem;
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *wait_co_ctx;
-    ngx_connection_t            *c;
-    ngx_queue_t                 *q;
+    ngx_http_lua_sema_t                 *sem;
+    ngx_http_request_t                  *r;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *wait_co_ctx;
+    ngx_connection_t                    *c;
+    ngx_queue_t                         *q;
 
     sem = ev->data;
 
@@ -511,11 +519,11 @@ ngx_http_lua_sema_handler(ngx_event_t *ev)
 static void
 ngx_http_lua_sema_timeout_handler(ngx_event_t *ev)
 {
-    ngx_http_lua_co_ctx_t       *wait_co_ctx;
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_connection_t            *c;
-    ngx_http_lua_sema_t         *sem;
+    ngx_http_lua_co_ctx_t               *wait_co_ctx;
+    ngx_http_request_t                  *r;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_connection_t                    *c;
+    ngx_http_lua_sema_t                 *sem;
 
     wait_co_ctx = ev->data;
     wait_co_ctx->cleanup = NULL;

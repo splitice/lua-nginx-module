@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_sleep.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -28,8 +36,9 @@ ngx_http_lua_ngx_sleep(lua_State *L)
     int                          n;
     ngx_int_t                    delay; /* in msec */
     ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *coctx;
+
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx;
 
     n = lua_gettop(L);
     if (n != 1) {
@@ -52,12 +61,15 @@ ngx_http_lua_ngx_sleep(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
+
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
                                | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
-                               | NGX_HTTP_LUA_CONTEXT_TIMER
+                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
+
+
                                | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH);
+                               | NGX_HTTP_LUA_CONTEXT_TIMER);
 
     coctx = ctx->cur_co_ctx;
     if (coctx == NULL) {
@@ -102,16 +114,19 @@ ngx_http_lua_ngx_sleep(lua_State *L)
 void
 ngx_http_lua_sleep_handler(ngx_event_t *ev)
 {
-    ngx_connection_t        *c;
-    ngx_http_request_t      *r;
-    ngx_http_lua_ctx_t      *ctx;
-    ngx_http_log_ctx_t      *log_ctx;
-    ngx_http_lua_co_ctx_t   *coctx;
+    ngx_connection_t                *c;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
+    ngx_http_log_ctx_t              *log_ctx;
+    ngx_http_lua_co_ctx_t           *coctx;
 
     coctx = ev->data;
 
     r = coctx->data;
+
+
     c = r->connection;
+
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
 
@@ -128,6 +143,7 @@ ngx_http_lua_sleep_handler(ngx_event_t *ev)
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "lua sleep timer expired: \"%V?%V\"", &r->uri, &r->args);
+
 
     ctx->cur_co_ctx = coctx;
 
@@ -154,7 +170,7 @@ ngx_http_lua_inject_sleep_api(lua_State *L)
 static void
 ngx_http_lua_sleep_cleanup(void *data)
 {
-    ngx_http_lua_co_ctx_t          *coctx = data;
+    ngx_http_lua_co_ctx_t                  *coctx = data;
 
     if (coctx->sleep.timer_set) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
@@ -177,11 +193,11 @@ ngx_http_lua_sleep_cleanup(void *data)
 static ngx_int_t
 ngx_http_lua_sleep_resume(ngx_http_request_t *r)
 {
-    lua_State                   *vm;
-    ngx_connection_t            *c;
-    ngx_int_t                    rc;
-    ngx_uint_t                   nreqs;
-    ngx_http_lua_ctx_t          *ctx;
+    lua_State                           *vm;
+    ngx_connection_t                    *c;
+    ngx_int_t                            rc;
+    ngx_uint_t                           nreqs;
+    ngx_http_lua_ctx_t                  *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {

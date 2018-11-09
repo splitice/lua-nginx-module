@@ -1,3 +1,11 @@
+
+/*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_string.c.tt2
+ */
+
 /*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
@@ -50,6 +58,7 @@ static int ngx_http_lua_ngx_crc32_short(lua_State *L);
 static int ngx_http_lua_ngx_crc32_long(lua_State *L);
 static int ngx_http_lua_ngx_encode_args(lua_State *L);
 static int ngx_http_lua_ngx_decode_args(lua_State *L);
+
 #if (NGX_OPENSSL)
 static int ngx_http_lua_ngx_hmac_sha1(lua_State *L);
 #endif
@@ -759,7 +768,8 @@ ngx_http_lua_ffi_uri_escaped_length(const u_char *src, size_t len)
 void
 ngx_http_lua_ffi_escape_uri(const u_char *src, size_t len, u_char *dst)
 {
-    ngx_http_lua_escape_uri(dst, (u_char *) src, len, NGX_ESCAPE_URI_COMPONENT);
+    ngx_http_lua_escape_uri(dst, (u_char *) src, len,
+                            NGX_ESCAPE_URI_COMPONENT);
 }
 
 #endif

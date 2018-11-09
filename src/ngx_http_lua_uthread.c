@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_uthread.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -49,10 +57,10 @@ ngx_http_lua_inject_uthread_api(ngx_log_t *log, lua_State *L)
 static int
 ngx_http_lua_uthread_spawn(lua_State *L)
 {
-    int                           n;
-    ngx_http_request_t           *r;
-    ngx_http_lua_ctx_t           *ctx;
-    ngx_http_lua_co_ctx_t        *coctx = NULL;
+    int                              n;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
+    ngx_http_lua_co_ctx_t           *coctx = NULL;
 
     n = lua_gettop(L);
 
@@ -111,8 +119,9 @@ ngx_http_lua_uthread_wait(lua_State *L)
     int                          i, nargs, nrets;
     lua_State                   *sub_co;
     ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *coctx, *sub_coctx;
+
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx, *sub_coctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -124,11 +133,14 @@ ngx_http_lua_uthread_wait(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
+
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
                                | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
-                               | NGX_HTTP_LUA_CONTEXT_TIMER
-                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
+
+
+                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT
+                               | NGX_HTTP_LUA_CONTEXT_TIMER);
 
     coctx = ctx->cur_co_ctx;
 
@@ -209,8 +221,9 @@ ngx_http_lua_uthread_kill(lua_State *L)
 {
     lua_State                   *sub_co;
     ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_http_lua_co_ctx_t       *coctx, *sub_coctx;
+
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_http_lua_co_ctx_t               *coctx, *sub_coctx;
 
     r = ngx_http_lua_get_req(L);
     if (r == NULL) {
@@ -222,11 +235,14 @@ ngx_http_lua_uthread_kill(lua_State *L)
         return luaL_error(L, "no request ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_CONTENT
+
+                               | NGX_HTTP_LUA_CONTEXT_REWRITE
                                | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
-                               | NGX_HTTP_LUA_CONTEXT_TIMER
-                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT);
+
+
+                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT
+                               | NGX_HTTP_LUA_CONTEXT_TIMER);
 
     coctx = ctx->cur_co_ctx;
 

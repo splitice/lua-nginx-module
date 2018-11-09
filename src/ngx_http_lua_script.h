@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_script.h.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -37,7 +45,8 @@ typedef struct {
     ngx_log_t                       *log;
     ngx_pool_t                      *pool;
     ngx_str_t                       *value;
-    ngx_http_lua_complex_value_t    *complex_value;
+
+    ngx_http_lua_complex_value_t            *complex_value;
 } ngx_http_lua_compile_complex_value_t;
 
 
@@ -57,27 +66,28 @@ typedef struct {
 } ngx_http_lua_script_engine_t;
 
 
-typedef void (*ngx_http_lua_script_code_pt) (ngx_http_lua_script_engine_t *e);
+typedef void (*ngx_http_lua_script_code_pt) (
+    ngx_http_lua_script_engine_t *e);
 typedef size_t (*ngx_http_lua_script_len_code_pt)
     (ngx_http_lua_script_engine_t *e);
 
 
 typedef struct {
-    ngx_http_lua_script_code_pt     code;
-    uintptr_t                       len;
+    ngx_http_lua_script_code_pt             code;
+    uintptr_t                               len;
 } ngx_http_lua_script_copy_code_t;
 
 
 typedef struct {
-    ngx_http_lua_script_code_pt     code;
-    uintptr_t                       n;
+    ngx_http_lua_script_code_pt             code;
+    uintptr_t                               n;
 } ngx_http_lua_script_capture_code_t;
 
 
 ngx_int_t ngx_http_lua_compile_complex_value(
     ngx_http_lua_compile_complex_value_t *ccv);
-ngx_int_t ngx_http_lua_complex_value(ngx_http_request_t *r, ngx_str_t *subj,
-    size_t offset, ngx_int_t count, int *cap,
+ngx_int_t ngx_http_lua_complex_value(ngx_http_request_t *r,
+    ngx_str_t *subj, size_t offset, ngx_int_t count, int *cap,
     ngx_http_lua_complex_value_t *val, luaL_Buffer *luabuf);
 
 

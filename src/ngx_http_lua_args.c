@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_args.c.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -311,11 +319,10 @@ ngx_http_lua_parse_args(lua_State *L, u_char *buf, u_char *last, int max)
             }
 
             if (max > 0 && ++count == max) {
-                lua_pushliteral(L, "truncated");
-
                 ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ngx_cycle->log, 0,
                                "lua hit query args limit %d", max);
-                return 2;
+
+                return 1;
             }
 
         } else {
@@ -388,8 +395,7 @@ ngx_http_lua_ffi_req_get_querystring_len(ngx_http_request_t *r)
 
 
 int
-ngx_http_lua_ffi_req_get_uri_args_count(ngx_http_request_t *r, int max,
-    int *truncated)
+ngx_http_lua_ffi_req_get_uri_args_count(ngx_http_request_t *r, int max)
 {
     int                      count;
     u_char                  *p, *last;
@@ -397,8 +403,6 @@ ngx_http_lua_ffi_req_get_uri_args_count(ngx_http_request_t *r, int max,
     if (r->connection->fd == (ngx_socket_t) -1) {
         return NGX_HTTP_LUA_FFI_BAD_CONTEXT;
     }
-
-    *truncated = 0;
 
     if (max < 0) {
         max = NGX_HTTP_LUA_MAX_ARGS;
@@ -421,7 +425,6 @@ ngx_http_lua_ffi_req_get_uri_args_count(ngx_http_request_t *r, int max,
     if (count) {
         if (max > 0 && count > max) {
             count = max;
-            *truncated = 1;
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                            "lua hit query args limit %d", max);
         }

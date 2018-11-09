@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_util.h.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -20,8 +28,15 @@
 
 #ifndef NGX_LUA_NO_FFI_API
 typedef struct {
-    ngx_http_lua_ffi_str_t   key;
-    ngx_http_lua_ffi_str_t   value;
+    int          len;
+    /* this padding hole on 64-bit systems is expected */
+    u_char      *data;
+} ngx_http_lua_ffi_str_t;
+
+
+typedef struct {
+    ngx_http_lua_ffi_str_t           key;
+    ngx_http_lua_ffi_str_t           value;
 } ngx_http_lua_ffi_table_elt_t;
 #endif /* NGX_LUA_NO_FFI_API */
 
@@ -97,8 +112,8 @@ extern char ngx_http_lua_headers_metatable_key;
 
 #ifndef NGX_LUA_NO_FFI_API
 static ngx_inline ngx_int_t
-ngx_http_lua_ffi_check_context(ngx_http_lua_ctx_t *ctx, unsigned flags,
-    u_char *err, size_t *errlen)
+ngx_http_lua_ffi_check_context(ngx_http_lua_ctx_t *ctx,
+    unsigned flags, u_char *err, size_t *errlen)
 {
     if (!(ctx->context & flags)) {
         *errlen = ngx_snprintf(err, *errlen,
@@ -123,7 +138,8 @@ ngx_http_lua_ffi_check_context(ngx_http_lua_ctx_t *ctx, unsigned flags,
 #define ngx_http_lua_check_fake_request2(L, r, ctx)                          \
     if ((r)->connection->fd == (ngx_socket_t) -1) {                          \
         return luaL_error(L, "API disabled in the context of %s",            \
-                          ngx_http_lua_context_name((ctx)->context));        \
+                          ngx_http_lua_context_name((ctx)                    \
+                          ->context));                                       \
     }
 
 
@@ -197,8 +213,8 @@ int ngx_http_lua_traceback(lua_State *L);
 ngx_http_lua_co_ctx_t *ngx_http_lua_get_co_ctx(lua_State *L,
     ngx_http_lua_ctx_t *ctx);
 
-ngx_http_lua_co_ctx_t *ngx_http_lua_create_co_ctx(ngx_http_request_t *r,
-    ngx_http_lua_ctx_t *ctx);
+ngx_http_lua_co_ctx_t *ngx_http_lua_create_co_ctx(
+    ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx);
 
 ngx_int_t ngx_http_lua_run_posted_threads(ngx_connection_t *c, lua_State *L,
     ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx, ngx_uint_t nreqs);
@@ -234,10 +250,13 @@ ngx_connection_t *ngx_http_lua_create_fake_connection(ngx_pool_t *pool);
 
 ngx_http_request_t *ngx_http_lua_create_fake_request(ngx_connection_t *c);
 
+
 ngx_int_t ngx_http_lua_report(ngx_log_t *log, lua_State *L, int status,
     const char *prefix);
 
 int ngx_http_lua_do_call(ngx_log_t *log, lua_State *L);
+
+
 
 ngx_http_cleanup_t *ngx_http_lua_cleanup_add(ngx_http_request_t *r,
     size_t size);
@@ -266,21 +285,26 @@ ngx_http_lua_init_ctx(ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx)
 static ngx_inline ngx_http_lua_ctx_t *
 ngx_http_lua_create_ctx(ngx_http_request_t *r)
 {
-    lua_State                   *L;
-    ngx_http_lua_ctx_t          *ctx;
-    ngx_pool_cleanup_t          *cln;
-    ngx_http_lua_loc_conf_t     *llcf;
-    ngx_http_lua_main_conf_t    *lmcf;
+    lua_State                           *L;
+    ngx_http_lua_ctx_t                  *ctx;
+    ngx_pool_cleanup_t                  *cln;
+    ngx_http_lua_loc_conf_t             *llcf;
+    ngx_http_lua_main_conf_t            *lmcf;
+
 
     ctx = ngx_palloc(r->pool, sizeof(ngx_http_lua_ctx_t));
+
     if (ctx == NULL) {
         return NULL;
     }
 
+
     ngx_http_lua_init_ctx(r, ctx);
+
     ngx_http_set_ctx(r, ctx, ngx_http_lua_module);
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
+
     if (!llcf->enable_code_cache && r->connection->fd != (ngx_socket_t) -1) {
         lmcf = ngx_http_get_module_main_conf(r, ngx_http_lua_module);
 
@@ -288,6 +312,8 @@ ngx_http_lua_create_ctx(ngx_http_request_t *r)
 
         L = ngx_http_lua_init_vm(lmcf->lua, lmcf->cycle, r->pool, lmcf,
                                  r->connection->log, &cln);
+
+
         if (L == NULL) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "failed to initialize Lua VM");
@@ -312,9 +338,10 @@ ngx_http_lua_create_ctx(ngx_http_request_t *r)
 
 
 static ngx_inline lua_State *
-ngx_http_lua_get_lua_vm(ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx)
+ngx_http_lua_get_lua_vm(ngx_http_request_t *r,
+    ngx_http_lua_ctx_t *ctx)
 {
-    ngx_http_lua_main_conf_t    *lmcf;
+    ngx_http_lua_main_conf_t            *lmcf;
 
     if (ctx == NULL) {
         ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
@@ -339,7 +366,7 @@ ngx_http_lua_get_req(lua_State *L)
 #ifdef OPENRESTY_LUAJIT
     return lua_getexdata(L);
 #else
-    ngx_http_request_t    *r;
+    ngx_http_request_t          *r;
 
     lua_getglobal(L, ngx_http_lua_req_key);
     r = lua_touserdata(L, -1);
@@ -399,7 +426,7 @@ ngx_http_lua_hash_str(u_char *src, size_t n)
 static ngx_inline ngx_int_t
 ngx_http_lua_set_content_type(ngx_http_request_t *r)
 {
-    ngx_http_lua_loc_conf_t     *llcf;
+    ngx_http_lua_loc_conf_t             *llcf;
 
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
     if (llcf->use_default_type
@@ -423,7 +450,8 @@ ngx_http_lua_cleanup_pending_operation(ngx_http_lua_co_ctx_t *coctx)
 
 
 static ngx_inline ngx_chain_t *
-ngx_http_lua_get_flush_chain(ngx_http_request_t *r, ngx_http_lua_ctx_t *ctx)
+ngx_http_lua_get_flush_chain(ngx_http_request_t *r,
+    ngx_http_lua_ctx_t *ctx)
 {
     ngx_chain_t  *cl;
 

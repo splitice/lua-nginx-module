@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_phase.c.tt2
+ */
+
+
+/*
  * Copyright (C) Yichun Zhang (agentzh)
  */
 
@@ -21,8 +29,8 @@ static int ngx_http_lua_ngx_get_phase(lua_State *L);
 static int
 ngx_http_lua_ngx_get_phase(lua_State *L)
 {
-    ngx_http_request_t          *r;
-    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_request_t              *r;
+    ngx_http_lua_ctx_t              *ctx;
 
     r = ngx_http_lua_get_req(L);
 
@@ -44,6 +52,10 @@ ngx_http_lua_ngx_get_phase(lua_State *L)
         lua_pushliteral(L, "init_worker");
         break;
 
+    case NGX_HTTP_LUA_CONTEXT_SSL_CERT:
+        lua_pushliteral(L, "ssl_cert");
+        break;
+
     case NGX_HTTP_LUA_CONTEXT_SET:
         lua_pushliteral(L, "set");
         break;
@@ -56,14 +68,6 @@ ngx_http_lua_ngx_get_phase(lua_State *L)
         lua_pushliteral(L, "access");
         break;
 
-    case NGX_HTTP_LUA_CONTEXT_CONTENT:
-        lua_pushliteral(L, "content");
-        break;
-
-    case NGX_HTTP_LUA_CONTEXT_LOG:
-        lua_pushliteral(L, "log");
-        break;
-
     case NGX_HTTP_LUA_CONTEXT_HEADER_FILTER:
         lua_pushliteral(L, "header_filter");
         break;
@@ -72,24 +76,29 @@ ngx_http_lua_ngx_get_phase(lua_State *L)
         lua_pushliteral(L, "body_filter");
         break;
 
-    case NGX_HTTP_LUA_CONTEXT_TIMER:
-        lua_pushliteral(L, "timer");
-        break;
-
-    case NGX_HTTP_LUA_CONTEXT_BALANCER:
-        lua_pushliteral(L, "balancer");
-        break;
-
-    case NGX_HTTP_LUA_CONTEXT_SSL_CERT:
-        lua_pushliteral(L, "ssl_cert");
-        break;
-
     case NGX_HTTP_LUA_CONTEXT_SSL_SESS_STORE:
         lua_pushliteral(L, "ssl_session_store");
         break;
 
     case NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH:
         lua_pushliteral(L, "ssl_session_fetch");
+        break;
+
+
+    case NGX_HTTP_LUA_CONTEXT_CONTENT:
+        lua_pushliteral(L, "content");
+        break;
+
+    case NGX_HTTP_LUA_CONTEXT_LOG:
+        lua_pushliteral(L, "log");
+        break;
+
+    case NGX_HTTP_LUA_CONTEXT_TIMER:
+        lua_pushliteral(L, "timer");
+        break;
+
+    case NGX_HTTP_LUA_CONTEXT_BALANCER:
+        lua_pushliteral(L, "balancer");
         break;
 
     default:
@@ -112,7 +121,7 @@ ngx_http_lua_inject_phase_api(lua_State *L)
 int
 ngx_http_lua_ffi_get_phase(ngx_http_request_t *r, char **err)
 {
-    ngx_http_lua_ctx_t  *ctx;
+    ngx_http_lua_ctx_t          *ctx;
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     if (ctx == NULL) {

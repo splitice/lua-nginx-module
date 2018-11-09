@@ -1,5 +1,13 @@
 
 /*
+ * !!! DO NOT EDIT DIRECTLY !!!
+ * This file was automatically generated from the following template:
+ *
+ * src/subsys/ngx_subsys_lua_directive.h.tt2
+ */
+
+
+/*
  * Copyright (C) Xiaozhe Wang (chaoslawful)
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -12,7 +20,8 @@
 #include "ngx_http_lua_common.h"
 
 
-char *ngx_http_lua_shared_dict(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+char *ngx_http_lua_shared_dict(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 char *ngx_http_lua_package_cpath(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_package_path(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -21,6 +30,11 @@ char *ngx_http_lua_content_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_content_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+char *ngx_http_lua_log_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+char *ngx_http_lua_log_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+
 char *ngx_http_lua_rewrite_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_rewrite_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -28,10 +42,6 @@ char *ngx_http_lua_rewrite_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
 char *ngx_http_lua_access_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_access_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf);
-char *ngx_http_lua_log_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf);
-char *ngx_http_lua_log_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_header_filter_by_lua_block(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
@@ -41,6 +51,7 @@ char *ngx_http_lua_body_filter_by_lua_block(ngx_conf_t *cf,
     ngx_command_t *cmd, void *conf);
 char *ngx_http_lua_body_filter_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+
 char *ngx_http_lua_init_by_lua_block(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 char *ngx_http_lua_init_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -65,10 +76,12 @@ ngx_int_t ngx_http_lua_filter_set_by_lua_file(ngx_http_request_t *r,
 
 #endif
 
-char *ngx_http_lua_rewrite_no_postpone(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf);
+
 char *ngx_http_lua_conf_lua_block_parse(ngx_conf_t *cf,
     ngx_command_t *cmd);
+
+char *ngx_http_lua_rewrite_no_postpone(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 char *ngx_http_lua_capture_error_log(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 
