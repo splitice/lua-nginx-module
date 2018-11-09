@@ -1277,8 +1277,8 @@ ngx_http_lua_shdict_incr(lua_State *L)
 
     n = lua_gettop(L);
 
-    if (n != 3 && n != 4) {
-        return luaL_error(L, "expecting 3 or 4 arguments, but only seen %d", n);
+    if (n != 3 && n != 4 && n != 5) {
+        return luaL_error(L, "expecting 3-5 arguments, but only seen %d", n);
     }
 
     if (lua_type(L, 1) != LUA_TTABLE) {
@@ -1316,8 +1316,8 @@ ngx_http_lua_shdict_incr(lua_State *L)
 
     value = luaL_checknumber(L, 3);
 
-    if (n == 4) {
-        init = luaL_checknumber(L, 4);
+    if (n == 5) {
+        init = luaL_checknumber(L, 5);
     }
 
     dd("looking up key %.*s in shared dict %.*s", (int) key.len, key.data,
