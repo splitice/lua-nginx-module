@@ -2196,7 +2196,7 @@ ngx_http_lua_req_socket(lua_State *L)
 
     return ngx_http_lua_req_socket_tcp(L);
 
-    ngx_stream_lua_assert(0);
+    ngx_http_lua_assert(0);
 
     return luaL_error(L, "unexpected connection type");
 }
