@@ -2634,7 +2634,7 @@ ngx_http_lua_ffi_shdict_get(ngx_shm_zone_t *zone, u_char *key,
 
 int
 ngx_http_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
-    size_t key_len, double *value, char **err, int has_init, double init,
+    size_t key_len, double *value, int exptime, char **err, int has_init, double init,
     long init_ttl, int *forcible)
 {
     int                          i, n;
