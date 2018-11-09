@@ -27,7 +27,7 @@ __DATA__
         content_by_lua_block {
             local dogs = ngx.shared.dogs
             dogs:set("foo", 32)
-            local res, err = dogs:incr("foo", 10502, 1)
+            local res, err = dogs:incr("foo", 10502, -1, 1)
             ngx.say("incr: ", res, " ", err)
             ngx.say("foo = ", dogs:get("foo"))
         }
@@ -51,7 +51,7 @@ foo = 10534
             local dogs = ngx.shared.dogs
             dogs:flush_all()
             dogs:set("bah", 32)
-            local res, err = dogs:incr("foo", 10502, 1)
+            local res, err = dogs:incr("foo", 10502, -1, 1)
             ngx.say("incr: ", res, " ", err)
             ngx.say("foo = ", dogs:get("foo"))
         }
@@ -78,7 +78,7 @@ foo = 10503
             end
             dogs:set("foo", "32", 0.001)
             ngx.location.capture("/sleep/0.002")
-            local res, err = dogs:incr("foo", 10502, 0)
+            local res, err = dogs:incr("foo", 10502, -1, 0)
             ngx.say("incr: ", res, " ", err)
             ngx.say("foo = ", dogs:get("foo"))
         }
@@ -108,7 +108,7 @@ foo = 10502
             end
             dogs:set("foo", 32, 0.001)
             ngx.location.capture("/sleep/0.002")
-            local res, err = dogs:incr("foo", 10502, 0)
+            local res, err = dogs:incr("foo", 10502, -1, 0)
             ngx.say("incr: ", res, " ", err)
             ngx.say("foo = ", dogs:get("foo"))
         }
@@ -142,9 +142,9 @@ foo = 10502
                     break
                 end
             end
-            local res, err, forcible = dogs:incr(long_prefix .. "bar", 10502, 0)
+            local res, err, forcible = dogs:incr(long_prefix .. "bar", 10502, -1, 0)
             ngx.say("incr: ", res, " ", err, " ", forcible)
-            local res, err, forcible = dogs:incr(long_prefix .. "foo", 10502, 0)
+            local res, err, forcible = dogs:incr(long_prefix .. "foo", 10502, -1, 0)
             ngx.say("incr: ", res, " ", err, " ", forcible)
             ngx.say("foo = ", dogs:get(long_prefix .. "foo"))
         }
@@ -191,7 +191,7 @@ foo = 2
         content_by_lua_block {
             local dogs = ngx.shared.dogs
             dogs:set("foo", true)
-            local res, err = dogs:incr("foo", 1, 0)
+            local res, err = dogs:incr("foo", 1, -1, 0)
             ngx.say("incr: ", res, " ", err)
             ngx.say("foo = ", dogs:get("foo"))
         }
@@ -213,7 +213,7 @@ foo = true
     location = /test {
         content_by_lua_block {
             local dogs = ngx.shared.dogs
-            local res, err, forcible = dogs:incr("foo", 1, "bar")
+            local res, err, forcible = dogs:incr("foo", 1, -1, "bar")
             ngx.say("incr: ", res, " ", err, " ", forcible)
             ngx.say("foo = ", dogs:get("foo"))
         }
