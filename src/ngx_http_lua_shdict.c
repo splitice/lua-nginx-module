@@ -2675,13 +2675,12 @@ ngx_http_lua_ffi_shdict_incr(ngx_shm_zone_t *zone, u_char *key,
     double                       num;
     ngx_rbtree_node_t           *node;
     u_char                      *p;
-    ngx_time_t                  *tp;
     ngx_queue_t                 *queue, *q;
 
     ngx_http_lua_shdict_ctx_t           *ctx;
     ngx_http_lua_shdict_node_t          *sd;
 
-    if (init_ttl > 0) {
+    if (init_ttl > 0 || exptime > 0) {
         tp = ngx_timeofday();
     }
 
