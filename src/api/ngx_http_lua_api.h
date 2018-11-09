@@ -30,7 +30,7 @@
 /* Public API for other Nginx modules */
 
 
-#define ngx_http_lua_version    10012
+#define ngx_http_lua_version    10014
 
 
 typedef struct {
