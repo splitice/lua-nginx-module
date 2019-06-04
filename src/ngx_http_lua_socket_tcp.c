@@ -21,6 +21,7 @@
 
 static int ngx_http_lua_socket_tcp(lua_State *L);
 static int ngx_http_lua_socket_tcp_getfd(lua_State *L);
+static int ngx_http_lua_socket_req_getfd(lua_State *L);
 static int ngx_http_lua_socket_tcp_connect(lua_State *L);
 #if (NGX_HTTP_SSL)
 static int ngx_http_lua_socket_tcp_sslhandshake(lua_State *L);
@@ -280,6 +281,9 @@ ngx_http_lua_inject_socket_tcp_api(ngx_log_t *log, lua_State *L)
     lua_pushcfunction(L, ngx_http_lua_socket_tcp_settimeouts);
     lua_setfield(L, -2, "settimeouts"); /* ngx socket mt */
 
+    lua_pushcfunction(L, ngx_http_lua_socket_tcp_getfd);
+    lua_setfield(L, -2, "getfd"); /* ngx socket mt */
+
     lua_pushvalue(L, -1);
     lua_setfield(L, -2, "__index");
 
@@ -392,6 +396,9 @@ ngx_http_lua_inject_req_socket_api(lua_State *L)
 {
     lua_pushcfunction(L, ngx_http_lua_req_socket);
     lua_setfield(L, -2, "socket");
+    
+    lua_pushcfunction(L, ngx_http_lua_socket_req_getfd);
+    lua_setfield(L, -2, "getfd"); /* ngx socket mt */
 }
 
 static int
@@ -400,9 +407,9 @@ ngx_http_lua_socket_tcp_getfd(lua_State *L)
     ngx_connection_t                    *c;
     ngx_http_lua_socket_tcp_upstream_t    *u;
     
-     luaL_checktype(L, 1, LUA_TTABLE);
+    luaL_checktype(L, 1, LUA_TTABLE);
 
-     lua_rawgeti(L, 1, SOCKET_CTX_INDEX);
+    lua_rawgeti(L, 1, SOCKET_CTX_INDEX);
     u = lua_touserdata(L, -1);
     lua_pop(L, 1);
 
@@ -412,7 +419,7 @@ ngx_http_lua_socket_tcp_getfd(lua_State *L)
         return 2;
     }
 
-     c = u->peer.connection;
+    c = u->peer.connection;
     lua_pushinteger(L,(int) c->fd);
 
      return 1;
@@ -4322,6 +4329,22 @@ ngx_http_lua_socket_cleanup_compiled_pattern(lua_State *L)
 #endif
 
     return 0;
+}
+
+static int
+ngx_http_lua_socket_req_getfd(lua_State *L)
+{
+    ngx_connection_t                    *c;
+    ngx_http_request_t              *r;
+    
+    r = ngx_http_lua_get_req(L);
+    c = r->connection;
+    if(c == NULL){
+        return luaL_error(L, "unknown connection");
+    }
+    lua_pushinteger(L,(int) c->fd);
+
+     return 1;
 }
 
 
