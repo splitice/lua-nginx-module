@@ -298,7 +298,7 @@ exiting the user thread
 === TEST 5: exit in user thread (entry thread is still pending on the DNS resolver for ngx.socket.tcp)
 --- config
     location /lua {
-        resolver agentzh.org;
+        resolver 127.0.0.2:12345;
         resolver_timeout 12s;
         access_by_lua '
             local function f()
@@ -394,7 +394,7 @@ after
 === TEST 6: exit in user thread (entry thread is still pending on the DNS resolver for ngx.socket.udp)
 --- config
     location /lua {
-        resolver agentzh.org;
+        resolver 127.0.0.2:12345;
         resolver_timeout 12s;
         access_by_lua '
             local function f()
@@ -502,7 +502,7 @@ after
             ngx.say("after")
             local sock = ngx.socket.tcp()
             sock:settimeout(12000)
-            local ok, err = sock:connect("172.105.207.225", 12345)
+            local ok, err = sock:connect("127.0.0.2", 12345)
             if not ok then
                 ngx.say("failed to connect: ", err)
                 return

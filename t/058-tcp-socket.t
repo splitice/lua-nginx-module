@@ -245,11 +245,11 @@ attempt to send data on a closed socket:
 
 --- request
 GET /t
---- response_body
+--- response_body_like
 connected: 1
 request sent: 56
-first line received: HTTP/1.1 200 OK
-second line received: Server: openresty
+first line received: HTTP\/1\.1 200 OK
+second line received: (?:Date|Server): .*?
 --- no_error_log
 [error]
 --- timeout: 10
@@ -298,7 +298,7 @@ qr/connect\(\) failed \(\d+: Connection refused\)/
     location /test {
         content_by_lua '
             local sock = ngx.socket.tcp()
-            local ok, err = sock:connect("agentzh.org", 12345)
+            local ok, err = sock:connect("127.0.0.2", 12345)
             ngx.say("connect: ", ok, " ", err)
 
             local bytes
@@ -321,7 +321,7 @@ send: nil closed
 receive: nil closed
 close: nil closed
 --- error_log
-lua tcp socket connect timed out, when connecting to 172.105.207.225:12345
+lua tcp socket connect timed out, when connecting to 127.0.0.2:12345
 --- timeout: 10
 
 
@@ -1057,7 +1057,7 @@ close: 1 nil
 
 === TEST 19: cannot survive across request boundary (send)
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location /t {
@@ -1116,7 +1116,7 @@ received: OK|failed to send request: closed)\$"
 
 === TEST 20: cannot survive across request boundary (receive)
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location /t {
@@ -1191,7 +1191,7 @@ received: OK|failed to receive a line: closed \[nil\])$/
 
 === TEST 21: cannot survive across request boundary (close)
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location /t {
@@ -1260,7 +1260,7 @@ received: OK|failed to close: closed)$/
 
 === TEST 22: cannot survive across request boundary (connect)
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location /t {
@@ -2672,7 +2672,7 @@ lua clean up the timer for pending ngx.sleep
 
 === TEST 44: bad request tries to connect
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -2726,7 +2726,7 @@ qr/runtime error: content_by_lua\(nginx\.conf:\d+\):7: bad request/
 
 === TEST 45: bad request tries to receive
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -2783,7 +2783,7 @@ qr/runtime error: content_by_lua\(nginx\.conf:\d+\):14: bad request/
 
 === TEST 46: bad request tries to send
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -2840,7 +2840,7 @@ qr/runtime error: content_by_lua\(nginx\.conf:\d+\):14: bad request/
 
 === TEST 47: bad request tries to close
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -2897,7 +2897,7 @@ qr/runtime error: content_by_lua\(nginx\.conf:\d+\):14: bad request/
 
 === TEST 48: bad request tries to set keepalive
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -2954,7 +2954,7 @@ qr/runtime error: content_by_lua\(nginx\.conf:\d+\):14: bad request/
 
 === TEST 49: bad request tries to receiveuntil
 --- http_config eval
-    "lua_package_path '$::HtmlDir/?.lua;./?.lua';"
+    "lua_package_path '$::HtmlDir/?.lua;./?.lua;;';"
 --- config
     server_tokens off;
     location = /main {
@@ -3315,7 +3315,7 @@ close: 1 nil
 
             local thr = ngx.thread.spawn(function ()
                 sock = ngx.socket.tcp()
-                local ok, err = sock:connect("agentzh.org", 12345)
+                local ok, err = sock:connect("127.0.0.2", 12345)
                 if not ok then
                     ngx.say("failed to connect: ", err)
                     return
@@ -3720,10 +3720,10 @@ sudo iptables -I OUTPUT 1 -p udp --dport 10086 -j REJECT
     }
 --- request
 GET /t
---- response_body
-failed to connect: www.google.com could not be resolved
-failed to connect: www.google.com could not be resolved
-failed to connect: www.google.com could not be resolved
+--- response_body_like
+failed to connect: www.google.com could not be resolved(?: \(\d+: Operation timed out\))?
+failed to connect: www.google.com could not be resolved(?: \(\d+: Operation timed out\))?
+failed to connect: www.google.com could not be resolved(?: \(\d+: Operation timed out\))?
 hello!
 --- error_log eval
 qr{\[alert\] .*? send\(\) failed \(\d+: Operation not permitted\) while resolving}

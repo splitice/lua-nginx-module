@@ -29,6 +29,7 @@
 #include "ngx_http_lua_ssl_session_storeby.h"
 #include "ngx_http_lua_ssl_session_fetchby.h"
 #include "ngx_http_lua_headers.h"
+#include "ngx_http_lua_pipe.h"
 
 
 static void *ngx_http_lua_create_main_conf(ngx_conf_t *cf);
@@ -76,6 +77,13 @@ static ngx_conf_bitmask_t  ngx_http_lua_ssl_protocols[] = {
 
 static ngx_command_t ngx_http_lua_cmds[] = {
 
+    { ngx_string("lua_load_resty_core"),
+      NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_MAIN_CONF_OFFSET,
+      offsetof(ngx_http_lua_main_conf_t, load_resty_core),
+      NULL },
+
     { ngx_string("lua_max_running_timers"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -102,6 +110,13 @@ static ngx_command_t ngx_http_lua_cmds[] = {
       ngx_http_lua_capture_error_log,
       0,
       0,
+      NULL },
+
+    { ngx_string("lua_sa_restart"),
+      NGX_HTTP_MAIN_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_MAIN_CONF_OFFSET,
+      offsetof(ngx_http_lua_main_conf_t, set_sa_restart),
       NULL },
 
 #if (NGX_PCRE)
@@ -640,6 +655,10 @@ ngx_http_lua_init(ngx_conf_t *cf)
 #endif
     ngx_str_t                   name = ngx_string("host");
 
+    if (ngx_process == NGX_PROCESS_SIGNALLER || ngx_test_config) {
+        return NGX_OK;
+    }
+
     lmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_lua_module);
 
     lmcf->host_var_index = ngx_http_get_variable_index(cf, &name);
@@ -731,6 +750,11 @@ ngx_http_lua_init(ngx_conf_t *cf)
 
     cln->data = lmcf;
     cln->handler = ngx_http_lua_sema_mm_cleanup;
+
+#ifdef HAVE_NGX_LUA_PIPE
+    ngx_http_lua_pipe_init();
+#endif
+
 #endif
 
 #if nginx_version >= 1011011
@@ -860,6 +884,7 @@ ngx_http_lua_create_main_conf(ngx_conf_t *cf)
      */
 
     lmcf->pool = cf->pool;
+    lmcf->load_resty_core = NGX_CONF_UNSET;
     lmcf->max_pending_timers = NGX_CONF_UNSET;
     lmcf->max_running_timers = NGX_CONF_UNSET;
 #if (NGX_PCRE)
@@ -868,6 +893,8 @@ ngx_http_lua_create_main_conf(ngx_conf_t *cf)
 #endif
     lmcf->postponed_to_rewrite_phase_end = NGX_CONF_UNSET;
     lmcf->postponed_to_access_phase_end = NGX_CONF_UNSET;
+
+    lmcf->set_sa_restart = NGX_CONF_UNSET;
 
 #if (NGX_HTTP_LUA_HAVE_MALLOC_TRIM)
     lmcf->malloc_trim_cycle = NGX_CONF_UNSET_UINT;
@@ -891,6 +918,10 @@ ngx_http_lua_init_main_conf(ngx_conf_t *cf, void *conf)
 {
     ngx_http_lua_main_conf_t *lmcf = conf;
 
+    if (lmcf->load_resty_core == NGX_CONF_UNSET) {
+        lmcf->load_resty_core = 1;
+    }
+
 #if (NGX_PCRE)
     if (lmcf->regex_cache_max_entries == NGX_CONF_UNSET) {
         lmcf->regex_cache_max_entries = 1024;
@@ -908,6 +939,12 @@ ngx_http_lua_init_main_conf(ngx_conf_t *cf, void *conf)
     if (lmcf->max_running_timers == NGX_CONF_UNSET) {
         lmcf->max_running_timers = 256;
     }
+
+#if (NGX_HTTP_LUA_HAVE_SA_RESTART)
+    if (lmcf->set_sa_restart == NGX_CONF_UNSET) {
+        lmcf->set_sa_restart = 1;
+    }
+#endif
 
 #if (NGX_HTTP_LUA_HAVE_MALLOC_TRIM)
     if (lmcf->malloc_trim_cycle == NGX_CONF_UNSET_UINT) {
@@ -1040,6 +1077,12 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
             return NGX_CONF_ERROR;
 #else
+#   ifdef HAVE_SSL_CLIENT_HELLO_CB_SUPPORT
+            SSL_CTX_set_client_hello_cb(sscf->ssl.ctx,
+                                        ngx_http_lua_ssl_client_hello_handler,
+                                        NULL);
+#   endif
+
             SSL_CTX_sess_set_get_cb(sscf->ssl.ctx,
                                     ngx_http_lua_ssl_sess_fetch_handler);
 #endif

@@ -70,6 +70,25 @@
 #endif
 
 
+#if (NGX_HTTP_LUA_HAVE_SA_RESTART)
+#define NGX_HTTP_LUA_SA_RESTART_SIGS {                                       \
+    ngx_signal_value(NGX_RECONFIGURE_SIGNAL),                                \
+    ngx_signal_value(NGX_REOPEN_SIGNAL),                                     \
+    ngx_signal_value(NGX_NOACCEPT_SIGNAL),                                   \
+    ngx_signal_value(NGX_TERMINATE_SIGNAL),                                  \
+    ngx_signal_value(NGX_SHUTDOWN_SIGNAL),                                   \
+    ngx_signal_value(NGX_CHANGEBIN_SIGNAL),                                  \
+    SIGALRM,                                                                 \
+    SIGINT,                                                                  \
+    SIGIO,                                                                   \
+    SIGCHLD,                                                                 \
+    SIGSYS,                                                                  \
+    SIGPIPE,                                                                 \
+    0                                                                        \
+};
+#endif
+
+
 char ngx_http_lua_code_cache_key;
 char ngx_http_lua_regex_cache_key;
 char ngx_http_lua_socket_pool_key;
@@ -127,6 +146,13 @@ static int ngx_http_lua_get_raw_phase_context(lua_State *L);
 #ifndef LUA_PATH_SEP
 #define LUA_PATH_SEP ";"
 #endif
+
+
+#if !defined(LUA_DEFAULT_PATH) && (NGX_DEBUG)
+#define LUA_DEFAULT_PATH "../lua-resty-core/lib/?.lua;"                      \
+                         "../lua-resty-lrucache/lib/?.lua"
+#endif
+
 
 #define AUX_MARK "\1"
 
@@ -243,7 +269,6 @@ ngx_http_lua_new_state(lua_State *parent_vm, ngx_cycle_t *cycle,
 
         lua_pushliteral(L, LUA_DEFAULT_PATH ";"); /* package default */
         lua_getfield(L, -2, "path"); /* package default old */
-        old_path = lua_tolstring(L, -1, &old_path_len);
         lua_concat(L, 2); /* package new */
         lua_setfield(L, -2, "path"); /* package */
 #endif
@@ -414,7 +439,9 @@ ngx_http_lua_send_header_if_needed(ngx_http_request_t *r,
             r->headers_out.status = NGX_HTTP_OK;
         }
 
-        if (!ctx->headers_set && ngx_http_lua_set_content_type(r) != NGX_OK) {
+        if (!ctx->mime_set
+            && ngx_http_lua_set_content_type(r, ctx) != NGX_OK)
+        {
             return NGX_ERROR;
         }
 
@@ -3792,6 +3819,7 @@ ngx_http_lua_init_vm(lua_State *parent_vm, ngx_cycle_t *cycle,
     ngx_pool_t *pool, ngx_http_lua_main_conf_t *lmcf, ngx_log_t *log,
     ngx_pool_cleanup_t **pcln)
 {
+    int                              rc;
     lua_State                       *L;
     ngx_uint_t                       i;
     ngx_pool_cleanup_t              *cln;
@@ -3857,6 +3885,21 @@ ngx_http_lua_init_vm(lua_State *parent_vm, ngx_cycle_t *cycle,
         }
 
         lua_pop(L, 2);
+    }
+
+    if (lmcf->load_resty_core) {
+        lua_getglobal(L, "require");
+        lua_pushstring(L, "resty.core");
+
+        rc = lua_pcall(L, 1, 1, 0);
+        if (rc != 0) {
+            ngx_log_error(NGX_LOG_ERR, log, 0,
+                          "lua_load_resty_core failed to load the resty.core "
+                          "module from https://github.com/openresty/lua-resty"
+                          "-core; ensure you are using an OpenResty release "
+                          "from https://openresty.org/en/download.html "
+                          "(rc: %i, reason: %s)", rc, lua_tostring(L, -1));
+        }
     }
 
     return L;
@@ -4193,6 +4236,34 @@ ngx_http_lua_cleanup_free(ngx_http_request_t *r, ngx_http_cleanup_pt *cleanup)
         last = &(*last)->next;
     }
 }
+
+
+#if (NGX_HTTP_LUA_HAVE_SA_RESTART)
+void
+ngx_http_lua_set_sa_restart(ngx_log_t *log)
+{
+    int                    *signo;
+    int                     sigs[] = NGX_HTTP_LUA_SA_RESTART_SIGS;
+    struct sigaction        act;
+
+    for (signo = sigs; *signo != 0; signo++) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, log, 0,
+                       "setting SA_RESTART for signal %d", *signo);
+
+        if (sigaction(*signo, NULL, &act) != 0) {
+            ngx_log_error(NGX_LOG_WARN, log, ngx_errno, "failed to get "
+                          "sigaction for signal %d", *signo);
+        }
+
+        act.sa_flags |= SA_RESTART;
+
+        if (sigaction(*signo, &act, NULL) != 0) {
+            ngx_log_error(NGX_LOG_WARN, log, ngx_errno, "failed to set "
+                          "sigaction for signal %d", *signo);
+        }
+    }
+}
+#endif
 
 
 /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
