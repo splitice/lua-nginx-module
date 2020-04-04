@@ -249,6 +249,13 @@ ngx_http_lua_ssl_client_hello_handler(ngx_ssl_conn_t *ssl_conn,
     fc->log->file = c->log->file;
     fc->log->log_level = c->log->log_level;
     fc->ssl = c->ssl;
+    
+    cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
+    // remove hello timer, move to cert timer
+    if(c->read->timer_set) {
+        ngx_del_timer(c->read);
+        ngx_add_timer(c->read, cscf->client_ssl_certificate_timeout);
+    }
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
@@ -291,7 +298,6 @@ ngx_http_lua_ssl_client_hello_handler(ngx_ssl_conn_t *ssl_conn,
     c->log->action = "loading SSL client hello by lua";
 
     if (lscf->srv.ssl_client_hello_handler == NULL) {
-        cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
         ngx_log_error(NGX_LOG_ALERT, c->log, 0,
                       "no ssl_client_hello_by_lua* defined in "
@@ -572,6 +578,7 @@ ngx_http_lua_ffi_ssl_get_client_hello_server_name(ngx_http_request_t *r,
     if (!SSL_client_hello_get0_ext(ssl_conn, TLSEXT_TYPE_server_name, &p,
                                    &remaining))
     {
+        *err = "no server name extension";
         return NGX_DECLINED;
     }
 
