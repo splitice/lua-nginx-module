@@ -64,6 +64,23 @@ ngx_http_lua_inject_req_body_api(lua_State *L)
     lua_setfield(L, -2, "finish_body");
 }
 
+unsigned int 
+ngx_http_lua_ffi_bytes_sent(ngx_http_request_t *r)
+{
+    return r->connection->sent;
+}
+
+unsigned int 
+ngx_http_lua_ffi_bytes_buffered(ngx_http_request_t *r)
+{
+    unsigned total = 0;
+    ngx_chain_t* chain = r->out;
+    while(chain){
+        total += ngx_buf_size(chain->buf);
+        chain = chain->next;
+    }
+    return total;
+}
 
 static int
 ngx_http_lua_ngx_req_read_body(lua_State *L)
