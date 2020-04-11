@@ -67,13 +67,13 @@ ngx_http_lua_inject_req_body_api(lua_State *L)
 unsigned int 
 ngx_http_lua_ffi_bytes_sent(ngx_http_request_t *r)
 {
-    return r->connection->sent;
+    return r->http_connection->sent;
 }
 
 unsigned int 
 ngx_http_lua_ffi_con_nbusy(ngx_http_request_t *r)
 {
-    return r->connection->nbusy;
+    return r->http_connection->nbusy;
 }
 
 unsigned int 
