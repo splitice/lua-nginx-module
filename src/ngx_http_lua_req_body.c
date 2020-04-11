@@ -77,6 +77,18 @@ ngx_http_lua_ffi_con_nbusy(ngx_http_request_t *r)
 }
 
 unsigned int 
+ngx_http_lua_ffi_con_bytes_busy(ngx_http_request_t *r)
+{
+    unsigned int total = 0;
+    ngx_chain_t* chain = r->connection->busy;
+    while(chain){
+        total += ngx_buf_size(chain->buf);
+        chain = chain->next;
+    }
+    return total;
+}
+
+unsigned int 
 ngx_http_lua_ffi_bytes_buffered(ngx_http_request_t *r)
 {
     unsigned int total = 0;
