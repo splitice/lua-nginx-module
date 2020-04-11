@@ -67,7 +67,7 @@ ngx_http_lua_inject_req_body_api(lua_State *L)
 unsigned int 
 ngx_http_lua_ffi_bytes_sent(ngx_http_request_t *r)
 {
-    return r->http_connection->sent;
+    return r->connection->sent;
 }
 
 unsigned int 
@@ -80,7 +80,7 @@ unsigned int
 ngx_http_lua_ffi_con_bytes_busy(ngx_http_request_t *r)
 {
     unsigned int total = 0;
-    ngx_chain_t* chain = r->connection->busy;
+    ngx_chain_t* chain = r->http_connection->busy;
     while(chain){
         total += ngx_buf_size(chain->buf);
         chain = chain->next;
