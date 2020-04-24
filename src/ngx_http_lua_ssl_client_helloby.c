@@ -216,6 +216,12 @@ ngx_http_lua_ssl_client_hello_handler(ngx_ssl_conn_t *ssl_conn,
 
     dd("first time");
 
+    // remove hello timer, move to cert timer
+    if(c->read->timer_set) {
+        ngx_del_timer(c->read);
+        ngx_add_timer(c->read, c->listening->ssl_certificate_timeout);
+    }
+
     ngx_reusable_connection(c, 0);
 
     hc = c->data;
