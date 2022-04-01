@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Yichun Zhang (agentzh)
+ */
 
 #ifndef _NGX_HTTP_LUA_SSL_CLIENT_HELLOBY_H_INCLUDED_
 #define _NGX_HTTP_LUA_SSL_CLIENT_HELLOBY_H_INCLUDED_
@@ -27,6 +30,6 @@ int ngx_http_lua_ssl_client_hello_handler(ngx_ssl_conn_t *ssl_conn,
 #endif  /* NGX_HTTP_SSL */
 
 
-#endif /* _NGX_HTTP_LUA_SSL_CERTBY_H_INCLUDED_ */
+#endif /* _NGX_HTTP_LUA_SSL_CLIENT_HELLOBY_H_INCLUDED_ */
 
 /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
