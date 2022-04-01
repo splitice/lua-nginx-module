@@ -1275,36 +1275,28 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
             = prev->srv.ssl_client_hello_chunkname;
     }
 
-    if (conf->srv.ssl_client_hello_src.len) {
-        sscf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_ssl_module);
-        if (sscf == NULL || sscf->ssl.ctx == NULL) {
-            ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                          "no ssl configured for the server");
+  #ifdef LIBRESSL_VERSION_NUMBER
+          ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                        "LibreSSL does not support by ssl_client_hello_by_lua*");
+          return NGX_CONF_ERROR;
 
-            return NGX_CONF_ERROR;
-        }
-#ifdef LIBRESSL_VERSION_NUMBER
-        ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                      "LibreSSL does not support by ssl_client_hello_by_lua*");
-        return NGX_CONF_ERROR;
+  #else
 
-#else
+  #ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
 
-#ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+          SSL_CTX_set_client_hello_cb(sscf->ssl.ctx,
+                                      ngx_http_lua_ssl_client_hello_handler,
+                                      NULL);
 
-        SSL_CTX_set_client_hello_cb(sscf->ssl.ctx,
-                                    ngx_http_lua_ssl_client_hello_handler,
-                                    NULL);
+  #else
 
-#else
+          ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
+                        "OpenSSL too old to support "
+                        "ssl_client_hello_by_lua*");
+          return NGX_CONF_ERROR;
 
-        ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
-                      "OpenSSL too old to support "
-                      "ssl_client_hello_by_lua*");
-        return NGX_CONF_ERROR;
-
-#endif
-#endif
+  #endif
+  #endif
     }
 
     if (conf->srv.ssl_cert_src.len == 0) {
@@ -1316,7 +1308,6 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     if (conf->srv.ssl_cert_src.len) {
-        sscf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_ssl_module);
         if (sscf == NULL || sscf->ssl.ctx == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
                           "no ssl configured for the server");
@@ -1356,7 +1347,6 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     if (conf->srv.ssl_sess_store_src.len) {
-        sscf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_ssl_module);
         if (sscf && sscf->ssl.ctx) {
 #ifdef LIBRESSL_VERSION_NUMBER
             ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
@@ -1380,7 +1370,6 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     if (conf->srv.ssl_sess_fetch_src.len) {
-        sscf = ngx_http_conf_get_module_srv_conf(cf, ngx_http_ssl_module);
         if (sscf && sscf->ssl.ctx) {
 #ifdef LIBRESSL_VERSION_NUMBER
             ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
