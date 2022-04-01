@@ -315,10 +315,6 @@ struct ngx_http_lua_main_conf_s {
 union ngx_http_lua_srv_conf_u {
 #if (NGX_HTTP_SSL)
     struct {
-        ngx_http_lua_srv_conf_handler_pt     ssl_client_hello_handler;
-        ngx_str_t                            ssl_client_hello_src;
-        u_char                              *ssl_client_hello_src_key;
-
         ngx_http_lua_srv_conf_handler_pt     ssl_cert_handler;
         ngx_str_t                            ssl_cert_src;
         u_char                              *ssl_cert_src_key;
