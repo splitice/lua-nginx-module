@@ -773,10 +773,21 @@ ngx_http_lua_ffi_pipe_spawn(ngx_http_lua_ffi_pipe_proc_t *proc,
             }
         }
 
-        close(in[0]);
-        close(out[1]);
+        if (close(in[0]) == -1) {
+            ngx_log_error(NGX_LOG_EMERG, ngx_cycle->log, ngx_errno,
+                          "lua pipe failed to close the in[0]");
+        }
+
+        if (close(out[1]) == -1) {
+            ngx_log_error(NGX_LOG_EMERG, ngx_cycle->log, ngx_errno,
+                          "lua pipe failed to close the out[1]");
+        }
+
         if (!merge_stderr) {
-            close(err[1]);
+            if (close(err[1]) == -1) {
+                ngx_log_error(NGX_LOG_EMERG, ngx_cycle->log, ngx_errno,
+                              "lua pipe failed to close the err[1]");
+            }
         }
 
         if (environ != NULL) {
@@ -1141,7 +1152,7 @@ ngx_http_lua_pipe_get_lua_ctx(ngx_http_request_t *r,
     int                                 rc;
 
     *ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
-    if (ctx == NULL) {
+    if (*ctx == NULL) {
         return NGX_HTTP_LUA_FFI_NO_REQ_CTX;
     }
 

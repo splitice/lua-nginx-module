@@ -168,10 +168,10 @@ enum {
 
 
 enum {
-    SOCKET_OP_CONNECT,
-    SOCKET_OP_READ,
-    SOCKET_OP_WRITE,
-    SOCKET_OP_RESUME_CONN,
+    SOCKET_OP_CONNECT      = 0x01,
+    SOCKET_OP_READ         = 0x02,
+    SOCKET_OP_WRITE        = 0x04,
+    SOCKET_OP_RESUME_CONN  = 0x08,
 };
 
 
@@ -1764,7 +1764,7 @@ ngx_http_lua_ffi_socket_tcp_sslhandshake(ngx_http_request_t *r,
 #endif
     }
 
-    if (server_name->len == 0) {
+    if (server_name == NULL || server_name->len == 0) {
         u->ssl_name.len = 0;
 
     } else {
