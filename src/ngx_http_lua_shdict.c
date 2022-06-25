@@ -1818,8 +1818,8 @@ return_val:
 
 
 int
-ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, int op, u_char *key,
-    size_t key_len, long bucket_interval, long by, long exptime, int user_flags, char **errmsg, long* sum)
+ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len, long bucket_interval, 
+    long by, long exptime, int user_flags, char **errmsg, long* sum)
 {
     int                          i, n;
     u_char                       c, *p;
