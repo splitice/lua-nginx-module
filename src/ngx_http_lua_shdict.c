@@ -2011,7 +2011,7 @@ ngx_http_lua_shared_dict_tacalc(ngx_shm_zone_t *zone, u_char *key_data,
     switch (value->type) {
 
     case SHDICT_TTA:
-        sum = ngx_http_lua_tacalc((time_average*)data, ngx_timeofday())
+        sum = ngx_http_lua_tacalc((time_average*)data, ngx_timeofday());
        
         ngx_memcpy(&value->value.b, &sum, sizeof(double));
         value->type = SHDICT_TNUMBER;
