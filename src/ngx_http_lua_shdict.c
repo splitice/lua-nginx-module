@@ -55,8 +55,21 @@ enum {
     SHDICT_TNUMBER = 3,     /* same as LUA_TNUMBER */
     SHDICT_TSTRING = 4,     /* same as LUA_TSTRING */
     SHDICT_TLIST = 5,
+    SHDICT_TTA = 6,  /* time average structure */
 };
 
+//Number of buckets in time average
+#define TA_BUCKETS 32
+
+typedef struct {
+	uint32_t last;
+	uint16_t  interval;
+} ta_time;
+
+typedef struct {
+	uint16_t buckets[TA_BUCKETS];
+	ta_time  time;
+} time_average;
 
 static ngx_inline ngx_queue_t *
 ngx_http_lua_shdict_get_list_head(ngx_http_lua_shdict_node_t *sd, size_t len)
@@ -1699,6 +1712,321 @@ ngx_http_lua_ffi_shdict_get(ngx_shm_zone_t *zone, u_char *key,
         return NGX_OK;
     }
 
+    return NGX_OK;
+}
+
+static long ngx_http_lua_tahit(time_average* ta, long bucket_interval, long by, ngx_time_t* ts){
+	int bucketDiff;
+	unsigned int bucketN;
+	uint32_t bucketAbsolute;
+	long sum, expireTime;
+
+   	//the current bucket
+	bucketAbsolute = ts->sec / bucket_interval;
+	bucketN = bucketAbsolute % TA_BUCKETS;
+
+    //difference between the begining of the previously updated bucket and now.
+    //int limits the max time a value can be stale
+    bucketAbsolute %= 16777216;
+    bucketDiff = ((int)bucketAbsolute) - ta->time.last;
+
+    //Clear if bucket interval changes
+    if (ta->time.interval != bucket_interval){
+        bucketDiff = TA_BUCKETS;
+        ta->time.interval = bucket_interval;
+    }
+    
+    //If updated more than one bucket interval ago, we need to clear a bucket in between
+    if (bucketDiff > 0){
+        //Calculate number of buckets to clear
+        if (bucketDiff >= TA_BUCKETS){
+            bucketDiff = TA_BUCKETS;
+        }
+
+        //Clear some buckets
+        unsigned int f = bucketN;
+        for (int g = 0; g < bucketDiff; g++){
+            ta->buckets[f] = 0;
+            if (f == 0) {
+                f = TA_BUCKETS;
+            }
+            f--;
+        }
+
+        //Set our new bucket
+        ta->buckets[bucketN] = by;
+
+        //Set the time last updated
+        //todo: handle overflows
+        ta->time.last = bucketAbsolute;
+    }
+    else if(bucketDiff > -TA_BUCKETS)
+    {
+        //Increment our bucket
+        ta->buckets[bucketN] += by;
+    }
+    else {
+        goto sum;
+    }
+
+    //Calculate sum
+sum:
+    sum = 0;
+    for (unsigned int g = 0; g < TA_BUCKETS; g++){
+        sum += ta->buckets[g];
+    }
+
+    return sum;
+}
+
+
+//tacalc [timestamp] [key]
+static double ngx_http_lua_tacalc(time_average* ta, ngx_time_t* ts){
+	int bucketDiff;
+	unsigned int bucketN;
+	uint32_t bucketAbsolute;
+	double sum = 0;
+
+	//calculations
+	bucketAbsolute = ts->sec / ta->time.interval;
+	bucketN = bucketAbsolute % TA_BUCKETS;
+	bucketDiff = ((int)bucketAbsolute % 16777216) - ta->time.last;
+
+	//We only need to do reversed "clearing" if bucketDiff is greater than one bucket
+	if (bucketDiff > TA_BUCKETS){
+		//If we need to clear all buckets, then the value will be 0
+		goto return_val;
+	}
+	else if(bucketDiff < 0) {
+		bucketDiff = 0;//Negative guard
+	}
+
+	bucketDiff = TA_BUCKETS - bucketDiff;
+
+	//Sum up from bucketN to num_buckets (wrapped)
+	unsigned int f = bucketN;
+	for (int i = 0; i<bucketDiff; i++){
+		sum += ta->buckets[f];
+		if (++f == TA_BUCKETS) {
+			f = 0;
+		}
+	}
+return_val:
+
+    return sum;
+}
+
+
+int
+ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, int op, u_char *key,
+    size_t key_len, long bucket_interval, long by, long exptime, int user_flags, char **errmsg, long* sum)
+{
+    int                          i, n;
+    u_char                       c, *p;
+    uint32_t                     hash;
+    ngx_int_t                    rc;
+    ngx_time_t                  *tp;
+    ngx_queue_t                 *queue, *q;
+    ngx_rbtree_node_t           *node;
+    ngx_http_lua_shdict_ctx_t   *ctx;
+    ngx_http_lua_shdict_node_t  *sd;
+    size_t str_value_len = sizeof(time_average);
+
+    *sum = 0;
+    tp = ngx_timeofday();
+    dd("exptime: %ld", exptime);
+
+    ctx = zone->data;
+
+    hash = ngx_crc32_short(key, key_len);
+
+    ngx_shmtx_lock(&ctx->shpool->mutex);
+
+#if 1
+    ngx_http_lua_shdict_expire(ctx, 1);
+#endif
+
+    rc = ngx_http_lua_shdict_lookup(zone, hash, key, key_len, &sd);
+
+    dd("lookup returns %d", (int) rc);
+
+    if (rc == NGX_OK) {
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+        *errmsg = "exists";
+        return NGX_DECLINED;
+    }
+
+    if (rc == NGX_DONE) {
+        /* exists but expired */
+        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                        "lua shared dict set: found old entry and value "
+                        "size matched, reusing it");
+
+        ngx_queue_remove(&sd->queue);
+        ngx_queue_insert_head(&ctx->sh->lru_queue, &sd->queue);
+
+        if (exptime > 0) {
+            sd->expires = (uint64_t) tp->sec * 1000 + tp->msec
+                            + (uint64_t) exptime;
+
+        } else {
+            sd->expires = 0;
+        }
+
+        sd->user_flags = user_flags;
+
+        dd("setting value type to %d", value_type);
+
+        sd->value_type = (uint8_t) SHDICT_TTA;
+
+        *sum = ngx_http_lua_tahit((time_average*)(sd->data + key_len), bucket_interval, by, tp);
+
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+        return NGX_OK;
+    }
+
+    /* rc == NGX_DECLINED */
+
+    dd("go to insert");
+
+    /* rc == NGX_DECLINED or value size unmatch */
+
+    
+
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                   "lua shared dict set: creating a new entry");
+
+    n = offsetof(ngx_rbtree_node_t, color)
+        + offsetof(ngx_http_lua_shdict_node_t, data)
+        + key_len
+        + str_value_len;
+
+    node = ngx_slab_alloc_locked(ctx->shpool, n);
+
+    if (node == NULL) {
+
+        if (op & NGX_HTTP_LUA_SHDICT_SAFE_STORE) {
+            ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+            *errmsg = "no memory";
+            return NGX_ERROR;
+        }
+
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
+                       "lua shared dict set: overriding non-expired items "
+                       "due to memory shortage for entry \"%*s\"", key_len,
+                       key);
+
+        for (i = 0; i < 30; i++) {
+            if (ngx_http_lua_shdict_expire(ctx, 0) == 0) {
+                break;
+            }
+
+            node = ngx_slab_alloc_locked(ctx->shpool, n);
+            if (node != NULL) {
+                goto allocated;
+            }
+        }
+
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+        *errmsg = "no memory";
+        return NGX_ERROR;
+    }
+
+allocated:
+
+    sd = (ngx_http_lua_shdict_node_t *) &node->color;
+
+    node->key = hash;
+    sd->key_len = (u_short) key_len;
+
+    if (exptime > 0) {
+        sd->expires = (uint64_t) tp->sec * 1000 + tp->msec
+                      + (uint64_t) exptime;
+
+    } else {
+        sd->expires = 0;
+    }
+
+    sd->user_flags = user_flags;
+    sd->value_len = (uint32_t) str_value_len;
+    dd("setting value type to %d", value_type);
+    sd->value_type = (uint8_t) SHDICT_TTA;
+
+    p = ngx_copy(sd->data, key, key_len);
+    ngx_memzero(p, sizeof(time_average));
+    *sum = ngx_http_lua_tahit((time_average*)p, bucket_interval, by, tp);
+
+    ngx_rbtree_insert(&ctx->sh->rbtree, node);
+    ngx_queue_insert_head(&ctx->sh->lru_queue, &sd->queue);
+    ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+    return NGX_OK;
+}
+
+
+ngx_int_t
+ngx_http_lua_shared_dict_tacalc(ngx_shm_zone_t *zone, u_char *key_data,
+    size_t key_len, ngx_http_lua_value_t *value)
+{
+    u_char                      *data;
+    size_t                       len;
+    uint32_t                     hash;
+    ngx_int_t                    rc;
+    ngx_http_lua_shdict_ctx_t   *ctx;
+    ngx_http_lua_shdict_node_t  *sd;
+    double sum;
+
+    if (zone == NULL) {
+        return NGX_ERROR;
+    }
+
+    hash = ngx_crc32_short(key_data, key_len);
+
+    ctx = zone->data;
+
+    ngx_shmtx_lock(&ctx->shpool->mutex);
+
+    rc = ngx_http_lua_shdict_lookup(zone, hash, key_data, key_len, &sd);
+
+    dd("shdict lookup returned %d", (int) rc);
+
+    if (rc == NGX_DECLINED || rc == NGX_DONE) {
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+        return rc;
+    }
+
+    /* rc == NGX_OK */
+
+    value->type = sd->value_type;
+
+    dd("type: %d", (int) value->type);
+
+    data = sd->data + sd->key_len;
+    len = (size_t) sd->value_len;
+
+    switch (value->type) {
+
+    case SHDICT_TTA:
+        sum = ngx_http_lua_tacalc((time_average*)data, ngx_timeofday())
+       
+        ngx_memcpy(&value->value.b, &sum, sizeof(double));
+        value->type = SHDICT_TNUMBER;
+        break;
+
+    default:
+        ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0, "bad lua value type "
+                      "found for key %*s: %d", key_len, key_data,
+                      (int) value->type);
+
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+        return NGX_ERROR;
+    }
+
+    ngx_shmtx_unlock(&ctx->shpool->mutex);
     return NGX_OK;
 }
 
