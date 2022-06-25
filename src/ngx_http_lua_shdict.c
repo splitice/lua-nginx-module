@@ -1905,14 +1905,6 @@ ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len,
     node = ngx_slab_alloc_locked(ctx->shpool, n);
 
     if (node == NULL) {
-
-        if (op & NGX_HTTP_LUA_SHDICT_SAFE_STORE) {
-            ngx_shmtx_unlock(&ctx->shpool->mutex);
-
-            *errmsg = "no memory";
-            return NGX_ERROR;
-        }
-
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
                        "lua shared dict set: overriding non-expired items "
                        "due to memory shortage for entry \"%*s\"", key_len,
