@@ -1730,6 +1730,8 @@ static long ngx_http_lua_tahit(time_average* ta, long bucket_interval, long by, 
     bucketAbsolute %= 16777216;
     bucketDiff = ((int)bucketAbsolute) - ta->time.last;
 
+    fprintf(stderr, "bucketDiff: %d\n", bucketDiff);
+
     //Clear if bucket interval changes
     if (ta->time.interval != bucket_interval){
         bucketDiff = TA_BUCKETS;
@@ -1818,8 +1820,8 @@ return_val:
 
 
 int
-ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len, long bucket_interval, 
-    long by, long exptime, int user_flags, char **errmsg, long* sum)
+ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, const u_char *key, size_t key_len, long bucket_interval, 
+    long by, long exptime, int user_flags, char **errmsg, double* sum)
 {
     int                          i, n;
     u_char                       c, *p;
@@ -1830,7 +1832,6 @@ ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len,
     ngx_rbtree_node_t           *node;
     ngx_http_lua_shdict_ctx_t   *ctx;
     ngx_http_lua_shdict_node_t  *sd;
-    size_t str_value_len = sizeof(time_average);
 
     *sum = 0;
     tp = ngx_timeofday();
@@ -1850,13 +1851,7 @@ ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len,
 
     dd("lookup returns %d", (int) rc);
 
-    if (rc == NGX_OK) {
-        ngx_shmtx_unlock(&ctx->shpool->mutex);
-        *errmsg = "exists";
-        return NGX_DECLINED;
-    }
-
-    if (rc == NGX_DONE) {
+    if (rc != NGX_DECLINED) {
         /* exists but expired */
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, ctx->log, 0,
                         "lua shared dict set: found old entry and value "
@@ -1900,7 +1895,7 @@ ngx_http_lua_ffi_shdict_tahit(ngx_shm_zone_t *zone, u_char *key, size_t key_len,
     n = offsetof(ngx_rbtree_node_t, color)
         + offsetof(ngx_http_lua_shdict_node_t, data)
         + key_len
-        + str_value_len;
+        + sizeof(time_average);
 
     node = ngx_slab_alloc_locked(ctx->shpool, n);
 
@@ -1944,7 +1939,7 @@ allocated:
 
     sd->user_flags = user_flags;
     sd->value_len = (uint32_t) str_value_len;
-    dd("setting value type to %d", value_type);
+    dd("setting value type to %d", SHDICT_TTA);
     sd->value_type = (uint8_t) SHDICT_TTA;
 
     p = ngx_copy(sd->data, key, key_len);
@@ -1960,8 +1955,8 @@ allocated:
 
 
 ngx_int_t
-ngx_http_lua_shared_dict_tacalc(ngx_shm_zone_t *zone, u_char *key_data,
-    size_t key_len, ngx_http_lua_value_t *value)
+ngx_http_lua_shared_dict_tacalc(ngx_shm_zone_t *zone, const u_char *key_data,
+    size_t key_len, double* num_value)
 {
     u_char                      *data;
     size_t                       len;
@@ -1993,26 +1988,24 @@ ngx_http_lua_shared_dict_tacalc(ngx_shm_zone_t *zone, u_char *key_data,
 
     /* rc == NGX_OK */
 
-    value->type = sd->value_type;
-
     dd("type: %d", (int) value->type);
 
     data = sd->data + sd->key_len;
     len = (size_t) sd->value_len;
 
-    switch (value->type) {
+    switch (sd->value_type) {
 
     case SHDICT_TTA:
         sum = ngx_http_lua_tacalc((time_average*)data, ngx_timeofday());
        
-        ngx_memcpy(&value->value.b, &sum, sizeof(double));
-        value->type = SHDICT_TNUMBER;
+        *num_value = sum;
         break;
 
     default:
+        *num_value = 0;
         ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0, "bad lua value type "
                       "found for key %*s: %d", key_len, key_data,
-                      (int) value->type);
+                      (int) sd->value_type);
 
         ngx_shmtx_unlock(&ctx->shpool->mutex);
         return NGX_ERROR;
