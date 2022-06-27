@@ -1938,7 +1938,7 @@ allocated:
     }
 
     sd->user_flags = user_flags;
-    sd->value_len = (uint32_t) str_value_len;
+    sd->value_len = (uint32_t) sizeof(time_average);
     dd("setting value type to %d", SHDICT_TTA);
     sd->value_type = (uint8_t) SHDICT_TTA;
 
