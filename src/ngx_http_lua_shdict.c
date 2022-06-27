@@ -1730,8 +1730,6 @@ static long ngx_http_lua_tahit(time_average* ta, long bucket_interval, long by, 
     bucketAbsolute %= 16777216;
     bucketDiff = ((int)bucketAbsolute) - ta->time.last;
 
-    fprintf(stderr, "bucketDiff: %d\n", bucketDiff);
-
     //Clear if bucket interval changes
     if (ta->time.interval != bucket_interval){
         bucketDiff = TA_BUCKETS;
