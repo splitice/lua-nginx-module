@@ -234,7 +234,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_http_lua_ctx_t          *ctx;
     ngx_int_t                    rc;
     uint16_t                     old_context;
-    ngx_http_cleanup_t          *cln;
+    ngx_pool_cleanup_t          *cln;
     ngx_chain_t                 *out;
     ngx_chain_t                 *cl, *ln;
     ngx_http_lua_main_conf_t    *lmcf;
@@ -299,7 +299,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         out = NULL;
         ngx_chain_update_chains(r->pool,
                                 &ctx->free_bufs, &ctx->filter_busy_bufs, &out,
-                                (ngx_buf_tag_t) &ngx_http_lua_module);
+                                (ngx_buf_tag_t) &ngx_http_lua_body_filter);
         if (rc != NGX_OK
             && ctx->filter_busy_bufs != NULL
             && (r->connection->buffered
@@ -314,7 +314,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
     if (ctx->cleanup == NULL) {
-        cln = ngx_http_cleanup_add(r, 0);
+        cln = ngx_pool_cleanup_add(r->pool, 0);
         if (cln == NULL) {
             return NGX_ERROR;
         }
@@ -378,7 +378,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
     ngx_chain_update_chains(r->pool,
                             &ctx->free_bufs, &ctx->filter_busy_bufs, &out,
-                            (ngx_buf_tag_t) &ngx_http_lua_module);
+                            (ngx_buf_tag_t) &ngx_http_lua_body_filter);
 
     return rc;
 }
@@ -657,6 +657,7 @@ ngx_http_lua_body_filter_param_set(lua_State *L, ngx_http_request_t *r,
         return luaL_error(L, "no memory");
     }
 
+    cl->buf->tag = (ngx_buf_tag_t) &ngx_http_lua_body_filter;
     if (type == LUA_TTABLE) {
         cl->buf->last = ngx_http_lua_copy_str_in_table(L, 3, cl->buf->last);
 
@@ -674,6 +675,8 @@ done:
             if (cl == NULL) {
                 return luaL_error(L, "no memory");
             }
+
+            cl->buf->tag = (ngx_buf_tag_t) &ngx_http_lua_body_filter;
         }
 
         if (last) {

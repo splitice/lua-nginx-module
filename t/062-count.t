@@ -438,7 +438,7 @@ thread: 3
 --- request
 GET /test
 --- response_body
-worker: 4
+worker: 5
 --- no_error_log
 [error]
 
@@ -459,7 +459,7 @@ worker: 4
 --- request
 GET /test
 --- response_body
-n = 15
+n = 16
 --- no_error_log
 [error]
 

@@ -2845,6 +2845,38 @@ The support for the <code>TLSv1.3</code> parameter requires version <code>v0.10.
 
 This directive was first introduced in the <code>v0.9.11</code> release.
 
+== lua_ssl_certificate ==
+
+'''syntax:''' ''lua_ssl_certificate <file>''
+
+'''default:''' ''no''
+
+'''context:''' ''http, server, location''
+
+Specifies the file path to the SSL/TLS certificate in PEM format used for the [[#tcpsock:sslhandshake|tcpsock:sslhandshake]] method.
+
+This directive allows you to specify the SSL/TLS certificate that will be presented to server during the SSL/TLS handshake process.
+
+This directive was first introduced in the <code>v0.10.26</code> release.
+
+See also [[#lua_ssl_certificate_key|lua_ssl_certificate_key]] and [[#lua_ssl_verify_depth|lua_ssl_verify_depth]].
+
+== lua_ssl_certificate_key ==
+
+'''syntax:''' ''lua_ssl_certificate_key <file>''
+
+'''default:''' ''no''
+
+'''context:''' ''http, server, location''
+
+Specifies the file path to the private key associated with the SSL/TLS certificate used in the [[#tcpsock:sslhandshake|tcpsock:sslhandshake]] method.
+
+This directive allows you to specify the private key file corresponding to the SSL/TLS certificate specified by lua_ssl_certificate. The private key should be in PEM format and must match the certificate.
+
+This directive was first introduced in the <code>v0.10.26</code> release.
+
+See also [[#lua_ssl_certificate|lua_ssl_certificate]] and [[#lua_ssl_verify_depth|lua_ssl_verify_depth]].
+
 == lua_ssl_trusted_certificate ==
 
 '''syntax:''' ''lua_ssl_trusted_certificate <file>''
@@ -3387,7 +3419,7 @@ Because HTTP request is created after SSL handshake, the <code>ngx.ctx</code> cr
 in [[#ssl_certificate_by_lua|ssl_certificate_by_lua*]], [[#ssl_session_store_by_lua|ssl_session_store_by_lua*]], [[#ssl_session_fetch_by_lua|ssl_session_fetch_by_lua*]] and [[#ssl_client_hello_by_lua|ssl_client_hello_by_lua*]]
 is not available in the following phases like [[#rewrite_by_lua|rewrite_by_lua*]].
 
-Since <code>dev</code>, the <code>ngx.ctx</code> created during a SSL handshake
+Since <code>v0.10.18</code>, the <code>ngx.ctx</code> created during a SSL handshake
 will be inherited by the requests which share the same TCP connection established by the handshake.
 Note that overwrite values in <code>ngx.ctx</code> in the http request phases (like `rewrite_by_lua*`) will only take affect in the current http request.
 
@@ -6498,6 +6530,7 @@ This API function was first added to the <code>v0.10.1</code> release.
 
 Creates and returns a TCP or stream-oriented unix domain socket object (also known as one type of the "cosocket" objects). The following methods are supported on this object:
 
+* [[#tcpsock:bind|bind]]
 * [[#tcpsock:connect|connect]]
 * [[#tcpsock:setclientcert|setclientcert]]
 * [[#tcpsock:sslhandshake|sslhandshake]]
@@ -6534,6 +6567,38 @@ Starting from the <code>0.9.9</code> release, the cosocket object here is full-d
 This feature was first introduced in the <code>v0.5.0rc1</code> release.
 
 See also [[#ngx.socket.udp|ngx.socket.udp]].
+
+== tcpsock:bind ==
+'''syntax:''' ''ok, err = tcpsock:bind(address)''
+
+'''context:''' ''rewrite_by_lua*, access_by_lua*, content_by_lua*, ngx.timer.*, ssl_certificate_by_lua*''
+
+Just like the standard [[HttpProxyModule#proxy_bind|proxy_bind]] directive, this api makes the outgoing connection to a upstream server originate from the specified local IP address.
+
+Only IP addresses can be specified as the <code>address</code> argument.
+
+Here is an example for connecting to a TCP server from the specified local IP address:
+
+<geshi lang="nginx">
+    location /test {
+        content_by_lua_block {
+            local sock = ngx.socket.tcp()
+            -- assume "192.168.1.10" is the local ip address
+            local ok, err = sock:bind("192.168.1.10")
+            if not ok then
+                ngx.say("failed to bind")
+                return
+            end
+            local ok, err = sock:connect("192.168.1.67", 80)
+            if not ok then
+                ngx.say("failed to connect server: ", err)
+                return
+            end
+            ngx.say("successfully connected!")
+            sock:close()
+        }
+    }
+</geshi>
 
 == tcpsock:connect ==
 
@@ -7709,6 +7774,13 @@ This function returns a Lua number for the process ID (PID) of the current Nginx
 
 This API was first introduced in the <code>0.9.5</code> release.
 
+== ngx.worker.pids ==
+
+'''syntax:''' ''pid = ngx.worker.pids()''
+
+'''context:''' ''set_by_lua*, rewrite_by_lua*, access_by_lua*, content_by_lua*, header_filter_by_lua*, body_filter_by_lua*, log_by_lua*, ngx.timer.*, exit_worker_by_lua*''
+
+This function returns a Lua table for all Nginx worker process ID (PID). Nginx uses channel to send the current worker PID to another worker in the worker process start or restart. So this API can get all current worker PID.
 == ngx.worker.count ==
 
 '''syntax:''' ''count = ngx.worker.count()''

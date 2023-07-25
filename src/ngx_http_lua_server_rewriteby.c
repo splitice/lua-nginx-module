@@ -102,8 +102,13 @@ ngx_http_lua_server_rewrite_handler(ngx_http_request_t *r)
         return NGX_DONE;
     }
 
-    /* TODO: lscf do not have force_read_body */
+/* TODO: lscf do not have force_read_body
+ * http2 read body may break http2 stream process */
+#if (NGX_HTTP_V2)
+    if (llcf->force_read_body && !ctx->read_body_done && !r->main->stream) {
+#else
     if (llcf->force_read_body && !ctx->read_body_done) {
+#endif
         r->request_body_in_single_buf = 1;
         r->request_body_in_persistent_file = 1;
         r->request_body_in_clean_file = 1;
@@ -199,7 +204,7 @@ ngx_http_lua_server_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
     ngx_event_t             *rev;
     ngx_connection_t        *c;
     ngx_http_lua_ctx_t      *ctx;
-    ngx_http_cleanup_t      *cln;
+    ngx_pool_cleanup_t      *cln;
 
     ngx_http_lua_loc_conf_t     *llcf;
 
@@ -251,7 +256,7 @@ ngx_http_lua_server_rewrite_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     /*  {{{ register request cleanup hooks */
     if (ctx->cleanup == NULL) {
-        cln = ngx_http_cleanup_add(r, 0);
+        cln = ngx_pool_cleanup_add(r->pool, 0);
         if (cln == NULL) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }

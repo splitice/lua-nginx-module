@@ -8,7 +8,8 @@ log_level('debug');
 
 repeat_each(3);
 
-plan tests => repeat_each() * (blocks() * 2 + 33);
+# NB: the shutdown_error_log block is independent from repeat times
+plan tests => repeat_each() * (blocks() * 2 + 33) + 1;
 
 our $HtmlDir = html_dir;
 #warn $html_dir;
@@ -1239,3 +1240,95 @@ res: true
 --- must_die
 --- error_log eval
 qr/\[emerg\] \d+#\d+: unexpected "A" in/
+
+
+
+=== TEST 47: cosocket does not exit on worker_shutdown_timeout
+--- main_config
+worker_shutdown_timeout 1;
+--- config
+location /t {
+    content_by_lua_block {
+        local function thread_func()
+            local sock = ngx.socket.tcp()
+            local ok, err = sock:connect("127.0.0.1", 65110)
+            local bytes, err = sock:send("hello")
+            if bytes ~= 5 then
+                sock:close()
+                return ngx.exit(500)
+            end
+
+            local data, err = sock:receive(20)
+            local line, err, partial = sock:receive()
+            if not line then
+                ngx.log(ngx.ERR, "failed to read a line: ", err)
+                return
+            end
+
+            ngx.log(ngx.ERR, "successfully read a line: ", line)
+        end
+
+        local function timer_func()
+            ngx.thread.spawn(thread_func)
+        end
+
+        ngx.timer.at(1, timer_func)
+        ngx.say("Hello world")
+    }
+}
+--- request
+    GET /t
+--- response_body
+Hello world
+--- shutdown_error_log eval
+qr|failed to read a line: closed|
+--- timeout: 1.2
+
+
+
+=== TEST 48: nginx crashes when encountering an illegal http if header
+crash with ngx.send_headers()
+--- main_config
+--- config
+error_page 412 /my_error_handler_412;
+
+location /t {
+    rewrite_by_lua_block {
+        ngx.send_headers()
+        -- ngx.print() -- this also triggers the bug
+    }
+}
+location = /my_error_handler_412 {
+    return 412 "hello";
+}
+--- request
+    GET /t
+--- more_headers
+If-Match: 1
+--- error_code: 412
+--- response_body eval
+qr/\Ahello\z/
+
+
+
+=== TEST 49: nginx crashes when encountering an illegal http if header
+crash with ngx.print()
+--- main_config
+--- config
+error_page 412 /my_error_handler_412;
+
+location /t {
+    rewrite_by_lua_block {
+        ngx.print()
+    }
+}
+location = /my_error_handler_412 {
+    return 412 "hello";
+}
+--- request
+    GET /t
+--- more_headers
+If-Match: 1
+--- error_code: 412
+--- response_body eval
+qr/\Ahello\z/

@@ -2721,6 +2721,8 @@ lua_need_request_body
 
 **phase:** *depends on usage*
 
+Due to the stream processing feature of HTTP2, it does not support HTTP2 connection.
+
 Determines whether to force the request body data to be read before running rewrite/access/content_by_lua* or not. The Nginx core does not read the client request body by default and if request body data is required, then this directive should be turned `on` or the [ngx.req.read_body](#ngxreqread_body) function should be called within the Lua code.
 
 To read the request body data within the [$request_body](http://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_body) variable,
@@ -3321,13 +3323,14 @@ lua_ssl_protocols
 
 **syntax:** *lua_ssl_protocols \[SSLv2\] \[SSLv3\] \[TLSv1\] [TLSv1.1] [TLSv1.2] [TLSv1.3]*
 
-**default:** *lua_ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2*
+**default:** *lua_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3*
 
 **context:** *http, server, location*
 
 Enables the specified protocols for requests to a SSL/TLS server in the [tcpsock:sslhandshake](#tcpsocksslhandshake) method.
 
 The support for the `TLSv1.3` parameter requires version `v0.10.12` *and* OpenSSL 1.1.1.
+From version v0.10.25, the default value change from `SSLV3 TLSv1 TLSv1.1 TLSv1.2` to `TLSv1 TLSv1.1 TLSv1.2 TLSv1.3`.
 
 This directive was first introduced in the `v0.9.11` release.
 
@@ -3529,7 +3532,7 @@ lua_max_running_timers
 
 Controls the maximum number of "running timers" allowed.
 
-Running timers are those timers whose user callback functions are still running.
+Running timers are those timers whose user callback functions are still running or `lightthreads` spawned in callback functions are still running.
 
 When exceeding this limit, Nginx will stop running the callbacks of newly expired timers and log an error message "N lua_max_running_timers are not enough" where "N" is the current value of this directive.
 
@@ -3682,6 +3685,7 @@ Nginx API for Lua
 * [udpsock:settimeout](#udpsocksettimeout)
 * [ngx.socket.stream](#ngxsocketstream)
 * [ngx.socket.tcp](#ngxsockettcp)
+* [tcpsock:bind](#tcpsockbind)
 * [tcpsock:connect](#tcpsockconnect)
 * [tcpsock:setclientcert](#tcpsocksetclientcert)
 * [tcpsock:sslhandshake](#tcpsocksslhandshake)
@@ -3713,6 +3717,7 @@ Nginx API for Lua
 * [ngx.config.ngx_lua_version](#ngxconfigngx_lua_version)
 * [ngx.worker.exiting](#ngxworkerexiting)
 * [ngx.worker.pid](#ngxworkerpid)
+* [ngx.worker.pids](#ngxworkerpids)
 * [ngx.worker.count](#ngxworkercount)
 * [ngx.worker.id](#ngxworkerid)
 * [ngx.semaphore](#ngxsemaphore)
@@ -3836,7 +3841,8 @@ For example:
  }
 ```
 
-That is, Nginx variables cannot be created on-the-fly.
+That is, Nginx variables cannot be created on-the-fly. Here is a list of pre-defined
+[Nginx variables](http://nginx.org/en/docs/varindex.html).
 
 Some special Nginx variables like `$args` and `$limit_rate` can be assigned a value,
 many others are not, like `$query_string`, `$arg_PARAMETER`, and `$http_NAME`.
@@ -4111,7 +4117,7 @@ Because HTTP request is created after SSL handshake, the `ngx.ctx` created
 in [ssl_certificate_by_lua*](#ssl_certificate_by_lua), [ssl_session_store_by_lua*](#ssl_session_store_by_lua), [ssl_session_fetch_by_lua*](#ssl_session_fetch_by_lua) and [ssl_client_hello_by_lua*](#ssl_client_hello_by_lua)
 is not available in the following phases like [rewrite_by_lua*](#rewrite_by_lua).
 
-Since `dev`, the `ngx.ctx` created during a SSL handshake
+Since `v0.10.18`, the `ngx.ctx` created during a SSL handshake
 will be inherited by the requests which share the same TCP connection established by the handshake.
 Note that overwrite values in `ngx.ctx` in the http request phases (like `rewrite_by_lua*`) will only take affect in the current http request.
 
@@ -4982,7 +4988,9 @@ Multi-value arguments are also supported:
  ngx.req.set_uri_args({ a = 3, b = {5, 6} })
 ```
 
-which will result in a query string like `a=3&b=5&b=6`.
+which will result in a query string like `a=3&b=5&b=6` or `b=5&b=6&a=3`.
+
+**Note that when using Lua table as the `arg` argument, the order of the arguments in the result query string which change from time to time. If you would like to get an ordered result, you need to use Lua string as the `arg` argument.**
 
 This interface was first introduced in the `v0.3.1rc13` release.
 
@@ -5378,6 +5386,8 @@ Reads the client request body synchronously without blocking the Nginx event loo
  ngx.req.read_body()
  local args = ngx.req.get_post_args()
 ```
+
+Due to the stream processing feature of HTTP2, it does not support HTTP2 connection.
 
 If the request body is already read previously by turning on [lua_need_request_body](#lua_need_request_body) or by using other modules, then this function does not run and returns immediately.
 
@@ -7654,6 +7664,7 @@ ngx.socket.tcp
 
 Creates and returns a TCP or stream-oriented unix domain socket object (also known as one type of the "cosocket" objects). The following methods are supported on this object:
 
+* [bind](#tcpsockbind)
 * [connect](#tcpsockconnect)
 * [setclientcert](#tcpsocksetclientcert)
 * [sslhandshake](#tcpsocksslhandshake)
@@ -7690,6 +7701,42 @@ Starting from the `0.9.9` release, the cosocket object here is full-duplex, that
 This feature was first introduced in the `v0.5.0rc1` release.
 
 See also [ngx.socket.udp](#ngxsocketudp).
+
+[Back to TOC](#nginx-api-for-lua)
+
+tcpsock:bind
+------------
+**syntax:** *ok, err = tcpsock:bind(address)*
+
+**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, ngx.timer.&#42;, ssl_certificate_by_lua&#42;,ssl_session_fetch_by_lua&#42;,ssl_client_hello_by_lua&#42;*
+
+Just like the standard [proxy_bind](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_bind) directive, this api makes the outgoing connection to a upstream server originate from the specified local IP address.
+
+Only IP addresses can be specified as the `address` argument.
+
+Here is an example for connecting to a TCP server from the specified local IP address:
+
+```nginx
+
+ location /test {
+     content_by_lua_block {
+         local sock = ngx.socket.tcp()
+         -- assume "192.168.1.10" is the local ip address
+         local ok, err = sock:bind("192.168.1.10")
+         if not ok then
+             ngx.say("failed to bind")
+             return
+         end
+         local ok, err = sock:connect("192.168.1.67", 80)
+         if not ok then
+             ngx.say("failed to connect server: ", err)
+             return
+         end
+         ngx.say("successfully connected!")
+         sock:close()
+     }
+ }
+```
 
 [Back to TOC](#nginx-api-for-lua)
 
@@ -8158,7 +8205,7 @@ tcpsock:setoption
 
 **context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, ngx.timer.&#42;, ssl_certificate_by_lua&#42;, ssl_session_fetch_by_lua&#42;, ssl_client_hello_by_lua&#42;*
 
-This function is added for [LuaSocket](http://w3.impa.br/~diego/software/luasocket/tcp.html) API compatibility and does nothing for now. Its functionality is implemented `v0.10.18`.
+This function is added for [LuaSocket](http://w3.impa.br/~diego/software/luasocket/tcp.html) API compatibility, its functionality is implemented `v0.10.18`.
 
 This feature was first introduced in the `v0.5.0rc1` release.
 
@@ -8709,7 +8756,7 @@ be any Lua function, which will be invoked later in a background
 called automatically by the Nginx core with the arguments `premature`,
 `user_arg1`, `user_arg2`, and etc, where the `premature`
 argument takes a boolean value indicating whether it is a premature timer
-expiration or not, and `user_arg1`, `user_arg2`, and etc, are
+expiration or not(for the `0` delay timer it is always `false`), and `user_arg1`, `user_arg2`, and etc, are
 those (extra) user arguments specified when calling `ngx.timer.at`
 as the remaining arguments.
 
@@ -8982,6 +9029,19 @@ ngx.worker.pid
 This function returns a Lua number for the process ID (PID) of the current Nginx worker process. This API is more efficient than `ngx.var.pid` and can be used in contexts where the [ngx.var.VARIABLE](#ngxvarvariable) API cannot be used (like [init_worker_by_lua](#init_worker_by_lua)).
 
 This API was first introduced in the `0.9.5` release.
+
+[Back to TOC](#nginx-api-for-lua)
+
+ngx.worker.pids
+--------------
+
+**syntax:** *pids = ngx.worker.pids()*
+
+**context:** *set_by_lua&#42;, rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, header_filter_by_lua&#42;, body_filter_by_lua&#42;, log_by_lua&#42;, ngx.timer.&#42;, exit_worker_by_lua&#42;*
+
+This function returns a Lua table for all Nginx worker process IDs (PIDs). Nginx uses channel to send the current worker PID to another worker in the worker process start or restart. So this API can get all current worker PIDs. Windows does not have this API.
+
+This API was first introduced in the `0.10.23` release.
 
 [Back to TOC](#nginx-api-for-lua)
 
@@ -9285,6 +9345,7 @@ Only the following ngx_lua APIs could be used in `function_name` function of the
 * `ngx.config.nginx_configure`
 * `ngx.config.ngx_lua_version`
 
+* `ngx.shared.DICT`
 
 The first argument `threadpool` specifies the Nginx thread pool name defined by [thread_pool](https://nginx.org/en/docs/ngx_core_module.html#thread_pool).
 
@@ -9297,7 +9358,7 @@ The second argument `module_name` specifies the lua module name to execute in th
 
 The third argument `func_name` specifies the function field in the module table as the second argument.
 
-The type of `arg`s must be one of type below:
+The type of `args` must be one of type below:
 
 * boolean
 * number
@@ -9336,6 +9397,8 @@ Example1: do md5 calculation.
 local function md5()
     return ngx.md5("hello")
 end
+
+return { md5=md5, }
 ```
 
 Example2: write logs into the log file.
