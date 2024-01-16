@@ -13,6 +13,8 @@
 #include <ngx_channel.h>
 #endif
 
+#include <ngx_http.h>
+
 
 #define NGX_PROCESS_PRIVILEGED_AGENT    99
 
@@ -133,6 +135,22 @@ ngx_http_lua_ffi_get_process_type(void)
 
     return ngx_process;
 }
+
+
+int
+ngx_http_lua_ffi_del_listen(const char* text)
+{
+    ngx_addr_t addr;
+
+    // todo: request pool
+    if(ngx_parse_addr(ngx_cycle->pool, &addr, (u_char *) text, strlen(text)) != NGX_OK) {
+        return -1;
+    }
+
+    return -2;
+    //return ngx_http_del_listen(ngx_cycle, addr.sockaddr, addr.socklen);
+}
+
 
 #if defined(nginx_version) && nginx_version >= 1019003
 int
