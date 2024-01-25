@@ -419,6 +419,8 @@ ngx_http_lua_log_ssl_client_hello_error(ngx_log_t *log,
 {
     u_char              *p;
     ngx_connection_t    *c;
+    ngx_str_t          name;
+    long unsigned int  remaining;
 
     if (log->action) {
         p = ngx_snprintf(buf, len, " while %s", log->action);
@@ -432,17 +434,73 @@ ngx_http_lua_log_ssl_client_hello_error(ngx_log_t *log,
 
     c = log->data;
 
-    if (c && c->addr_text.len) {
+    if(!c) {
+        return buf;
+    }
+
+    if (c->addr_text.len) {
         p = ngx_snprintf(buf, len, ", client: %V", &c->addr_text);
         len -= p - buf;
         buf = p;
     }
 
-    if (c && c->listening && c->listening->addr_text.len) {
+    if (c->listening && c->listening->addr_text.len) {
         p = ngx_snprintf(buf, len, ", server: %V", &c->listening->addr_text);
-        /* len -= p - buf; */
+        len -= p - buf;
         buf = p;
     }
+
+    #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
+    #ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+    // add host:
+    if (c->ssl && c->ssl->connection) {
+        remaining = 0;
+
+        /* This code block is taken from OpenSSL's client_hello_select_server_ctx()
+        * */
+        if (!SSL_client_hello_get0_ext(c->ssl->connection, TLSEXT_TYPE_server_name, (const u_char**)&p,
+                                    &remaining))
+        {
+            return buf;
+        }
+
+        if (remaining <= 2) {
+            return buf;
+        }
+
+        name.len = (*(p++) << 8);
+        name.len += *(p++);
+        if (name.len + 2 != remaining) {
+            return buf;
+        }
+
+        remaining = name.len;
+        if (remaining == 0 || *p++ != TLSEXT_NAMETYPE_host_name) {
+            return buf;
+        }
+
+        remaining--;
+        if (remaining <= 2) {
+            return buf;
+        }
+
+        name.len = (*(p++) << 8);
+        name.len += *(p++);
+        if (name.len + 2 > remaining) {
+            return buf;
+        }
+
+        if(name.len > 0) {
+            name.data = p;
+            p = ngx_snprintf(buf, len, ", host: %V", &name);
+            buf = p;
+        }
+    }
+
+    #endif
+    #endif
+
+
 
     return buf;
 }
