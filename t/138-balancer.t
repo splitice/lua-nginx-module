@@ -309,6 +309,7 @@ qr{\[crit\] .*? connect\(\) to 0\.0\.0\.1:80 failed .*?, upstream: "http://0\.0\
 
 
 === TEST 12: code cache off
+--- no_http2
 --- http_config
     lua_package_path "$TEST_NGINX_SERVER_ROOT/html/?.lua;;";
 
@@ -570,7 +571,7 @@ upstream sent more data than specified in "Content-Length" header while reading 
 
 
 
-=== TEST 18: error in balancer_by_llua_block
+=== TEST 18: error in balancer_by_lua_block
 --- http_config
     upstream backend {
         server 0.0.0.1;
@@ -590,3 +591,49 @@ upstream sent more data than specified in "Content-Length" header while reading 
  "failed to load inlined Lua code: balancer_by_lua(nginx.conf:27):3: ')' expected (to close '(' at line 2) near '<eof>'",
 --- no_error_log
 [warn]
+
+
+
+=== TEST 19: disable ssl
+--- http_config
+    lua_package_path "$TEST_NGINX_SERVER_ROOT/html/?.lua;;";
+
+    upstream backend {
+        server 127.0.0.1:$TEST_NGINX_SERVER_PORT;
+        balancer_by_lua_block {
+            local ffi = require "ffi"
+            local C = ffi.C
+ffi.cdef[[
+int
+ngx_http_lua_ffi_balancer_set_upstream_tls(ngx_http_request_t *r, int on, char **err);
+]]
+            local errmsg = ffi.new("char *[1]")
+            local r = require "resty.core.base" .get_request()
+            if r == nil then
+                ngx.log(ngx.ERR, "no request found")
+                return
+            end
+
+            local rc = C.ngx_http_lua_ffi_balancer_set_upstream_tls(r, 0, errmsg)
+            if rc < 0 then
+                ngx.log(ngx.ERR, "failed to disable ssl: ", ffi.string(errmsg[0]))
+                return
+            end
+        }
+    }
+--- config
+    location = /t {
+        proxy_pass https://backend/back;
+    }
+
+    location = /back {
+        echo ok;
+    }
+
+--- request
+    GET /t
+--- response_body
+ok
+--- no_error_log
+[error]
+[cirt]

@@ -895,13 +895,7 @@ ngx_http_lua_socket_tcp_bind(lua_State *L)
         return luaL_error(L, "no ctx found");
     }
 
-    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_REWRITE
-                               | NGX_HTTP_LUA_CONTEXT_ACCESS
-                               | NGX_HTTP_LUA_CONTEXT_CONTENT
-                               | NGX_HTTP_LUA_CONTEXT_TIMER
-                               | NGX_HTTP_LUA_CONTEXT_SSL_CERT
-                               | NGX_HTTP_LUA_CONTEXT_SSL_SESS_FETCH
-                               | NGX_HTTP_LUA_CONTEXT_SSL_CLIENT_HELLO);
+    ngx_http_lua_check_context(L, ctx, NGX_HTTP_LUA_CONTEXT_YIELDABLE);
 
     luaL_checktype(L, 1, LUA_TTABLE);
 
@@ -2447,7 +2441,7 @@ ngx_http_lua_socket_tcp_receive(lua_State *L)
         case LUA_TNUMBER:
             bytes = lua_tointeger(L, 2);
             if (bytes < 0) {
-                return luaL_argerror(L, 2, "bad pattern argument");
+                return luaL_argerror(L, 2, "bad number argument");
             }
 
 #if 1
@@ -2464,7 +2458,7 @@ ngx_http_lua_socket_tcp_receive(lua_State *L)
             break;
 
         default:
-            return luaL_argerror(L, 2, "bad pattern argument");
+            return luaL_argerror(L, 2, "bad argument");
             break;
         }
 
@@ -4620,7 +4614,7 @@ ngx_http_lua_socket_receiveuntil_iterator(lua_State *L)
 
     n = lua_gettop(L);
     if (n > 1) {
-        return luaL_error(L, "expecting 0 or 1 arguments, "
+        return luaL_error(L, "expecting 0 or 1 argument, "
                           "but seen %d", n);
     }
 
@@ -5126,7 +5120,7 @@ ngx_http_lua_req_socket(lua_State *L)
         lua_pop(L, 1);
 
     } else {
-        return luaL_error(L, "expecting zero arguments, but got %d",
+        return luaL_error(L, "expecting 0 or 1 argument, but got %d",
                           lua_gettop(L));
     }
 
@@ -5146,6 +5140,12 @@ ngx_http_lua_req_socket(lua_State *L)
 #if (NGX_HTTP_V2)
     if (r->stream) {
         return luaL_error(L, "http v2 not supported yet");
+    }
+#endif
+
+#if (NGX_HTTP_V3)
+    if (r->http_version == NGX_HTTP_VERSION_30) {
+        return luaL_error(L, "http v3 not supported yet");
     }
 #endif
 
@@ -5429,6 +5429,34 @@ ngx_http_lua_socket_tcp_setkeepalive(lua_State *L)
 
     luaL_checktype(L, 1, LUA_TTABLE);
 
+    r = ngx_http_lua_get_req(L);
+    if (r == NULL) {
+        return luaL_error(L, "no request found");
+    }
+
+    llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
+
+    /* luaL_checkinteger will throw error if the argument is not a number.
+     * e.g.: bad argument \#2 to '?' (number expected, got string)
+     *
+     * We should check the argument in advance; otherwise,
+     * throwing an exception in the middle can compromise data integrity.
+     * e.g.: set pc->connection to NULL without following cleanup.
+     */
+    if (n >= 2 && !lua_isnil(L, 2)) {
+        timeout = (ngx_msec_t) luaL_checkinteger(L, 2);
+
+    } else {
+        timeout = llcf->keepalive_timeout;
+    }
+
+    if (n >= 3 && !lua_isnil(L, 3)) {
+        pool_size = luaL_checkinteger(L, 3);
+
+    } else {
+        pool_size = llcf->pool_size;
+    }
+
     lua_rawgeti(L, 1, SOCKET_CTX_INDEX);
     u = lua_touserdata(L, -1);
     lua_pop(L, 1);
@@ -5453,11 +5481,6 @@ ngx_http_lua_socket_tcp_setkeepalive(lua_State *L)
         lua_pushnil(L);
         lua_pushliteral(L, "closed");
         return 2;
-    }
-
-    r = ngx_http_lua_get_req(L);
-    if (r == NULL) {
-        return luaL_error(L, "no request found");
     }
 
     if (u->request != r) {
@@ -5530,18 +5553,8 @@ ngx_http_lua_socket_tcp_setkeepalive(lua_State *L)
 
     /* stack: obj timeout? size? pools cache_key */
 
-    llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
-
     if (spool == NULL) {
         /* create a new socket pool for the current peer key */
-
-        if (n >= 3 && !lua_isnil(L, 3)) {
-            pool_size = luaL_checkinteger(L, 3);
-
-        } else {
-            pool_size = llcf->pool_size;
-        }
-
         if (pool_size <= 0) {
             msg = lua_pushfstring(L, "bad \"pool_size\" option value: %d",
                                   pool_size);
@@ -5605,13 +5618,6 @@ ngx_http_lua_socket_tcp_setkeepalive(lua_State *L)
         ngx_del_timer(c->write);
     }
 
-    if (n >= 2 && !lua_isnil(L, 2)) {
-        timeout = (ngx_msec_t) luaL_checkinteger(L, 2);
-
-    } else {
-        timeout = llcf->keepalive_timeout;
-    }
-
 #if (NGX_DEBUG)
     if (timeout == 0) {
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
@@ -5645,6 +5651,7 @@ ngx_http_lua_socket_tcp_setkeepalive(lua_State *L)
     if (c->read->ready) {
         rc = ngx_http_lua_socket_keepalive_close_handler(c->read);
         if (rc != NGX_OK) {
+            ngx_http_lua_socket_tcp_finalize(r, u);
             lua_pushnil(L);
             lua_pushliteral(L, "connection in dubious state");
             return 2;

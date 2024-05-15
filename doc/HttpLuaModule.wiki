@@ -17,8 +17,8 @@ Production ready.
 = Version =
 
 This document describes ngx_lua
-[https://github.com/openresty/lua-nginx-module/tags v0.10.19], which was released
-on 3 Nov, 2020.
+[https://github.com/openresty/lua-nginx-module/tags v0.10.25], which was released
+on 19 June 2023.
 
 = Videos =
 
@@ -2849,7 +2849,7 @@ This directive was first introduced in the <code>v0.9.11</code> release.
 
 '''syntax:''' ''lua_ssl_certificate <file>''
 
-'''default:''' ''no''
+'''default:''' ''none''
 
 '''context:''' ''http, server, location''
 
@@ -2865,7 +2865,7 @@ See also [[#lua_ssl_certificate_key|lua_ssl_certificate_key]] and [[#lua_ssl_ver
 
 '''syntax:''' ''lua_ssl_certificate_key <file>''
 
-'''default:''' ''no''
+'''default:''' ''none''
 
 '''context:''' ''http, server, location''
 
@@ -2881,7 +2881,7 @@ See also [[#lua_ssl_certificate|lua_ssl_certificate]] and [[#lua_ssl_verify_dept
 
 '''syntax:''' ''lua_ssl_trusted_certificate <file>''
 
-'''default:''' ''no''
+'''default:''' ''none''
 
 '''context:''' ''http, server, location''
 
@@ -2903,7 +2903,7 @@ Sets the verification depth in the server certificates chain.
 
 This directive was first introduced in the <code>v0.9.11</code> release.
 
-See also [[#lua_ssl_trusted_certificate|lua_ssl_trusted_certificate]].
+See also [[#lua_ssl_certificate|lua_ssl_certificate]], [[#lua_ssl_certificate_key|lua_ssl_certificate_key]] and [[#lua_ssl_trusted_certificate|lua_ssl_trusted_certificate]].
 
 == lua_ssl_conf_command ==
 
@@ -4587,11 +4587,13 @@ See also [[#ngx.req.read_body|ngx.req.read_body]].
 
 == ngx.req.get_body_data ==
 
-'''syntax:''' ''data = ngx.req.get_body_data()''
+'''syntax:''' ''data = ngx.req.get_body_data(max_bytes?)''
 
 '''context:''' ''rewrite_by_lua*, access_by_lua*, content_by_lua*, log_by_lua*''
 
 Retrieves in-memory request body data. It returns a Lua string rather than a Lua table holding all the parsed query arguments. Use the [[#ngx.req.get_post_args|ngx.req.get_post_args]] function instead if a Lua table is required.
+
+The optional <code>max_bytes</code> function argument can be used when you don't need the entire body.
 
 This function returns <code>nil</code> if
 
@@ -4739,6 +4741,7 @@ Returns a read-only cosocket object that wraps the downstream connection. Only [
 
 In case of error, <code>nil</code> will be returned as well as a string describing the error.
 
+'''Note:''' This method will block while waiting for client request body to be fully received. Block time depends on the [http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_timeout client_body_timeout] directive and maximum body size specified by the [http://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size client_max_body_size] directive. If read timeout occurs or client body size exceeds the defined limit, this function will not return and <code>408 Request Time-out</code> or <code>413 Request Entity Too Large</code> response will be returned to the client instead.
 The socket object returned by this method is usually used to read the current request's body in a streaming fashion. Do not turn on the [[#lua_need_request_body|lua_need_request_body]] directive, and do not mix this call with [[#ngx.req.read_body|ngx.req.read_body]] and [[#ngx.req.discard_body|ngx.req.discard_body]].
 
 If any request body data has been pre-read into the Nginx core request header buffer, the resulting cosocket object will take care of this to avoid potential data loss resulting from such pre-reading.

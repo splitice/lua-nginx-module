@@ -59,6 +59,9 @@ static char *ngx_http_lua_ssl_conf_command_check(ngx_conf_t *cf, void *post,
 #endif
 static char *ngx_http_lua_malloc_trim(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+#if (NGX_PCRE2)
+extern void ngx_http_lua_regex_cleanup(void *data);
+#endif
 
 
 static ngx_conf_post_t  ngx_http_lua_lowat_post =
@@ -855,6 +858,17 @@ ngx_http_lua_init(ngx_conf_t *cf)
     cln->data = lmcf;
     cln->handler = ngx_http_lua_sema_mm_cleanup;
 
+#if (NGX_PCRE2)
+    /* add the cleanup of pcre2 regex */
+    cln = ngx_pool_cleanup_add(cf->pool, 0);
+    if (cln == NULL) {
+        return NGX_ERROR;
+    }
+
+    cln->data = lmcf;
+    cln->handler = ngx_http_lua_regex_cleanup;
+#endif
+
 #ifdef HAVE_NGX_LUA_PIPE
     ngx_http_lua_pipe_init();
 #endif
@@ -1164,15 +1178,15 @@ ngx_http_lua_create_srv_conf(ngx_conf_t *cf)
      *      lscf->srv.ssl_cert_chunkname = NULL;
      *      lscf->srv.ssl_cert_src_key = NULL;
      *
-     *      lscf->srv.ssl_session_store_handler = NULL;
-     *      lscf->srv.ssl_session_store_src = { 0, NULL };
-     *      lscf->srv.ssl_session_store_chunkname = NULL;
-     *      lscf->srv.ssl_session_store_src_key = NULL;
+     *      lscf->srv.ssl_sess_store_handler = NULL;
+     *      lscf->srv.ssl_sess_store_src = { 0, NULL };
+     *      lscf->srv.ssl_sess_store_chunkname = NULL;
+     *      lscf->srv.ssl_sess_store_src_key = NULL;
      *
-     *      lscf->srv.ssl_session_fetch_handler = NULL;
-     *      lscf->srv.ssl_session_fetch_src = { 0, NULL };
-     *      lscf->srv.ssl_session_fetch_chunkname = NULL;
-     *      lscf->srv.ssl_session_fetch_src_key = NULL;
+     *      lscf->srv.ssl_sess_fetch_handler = NULL;
+     *      lscf->srv.ssl_sess_fetch_src = { 0, NULL };
+     *      lscf->srv.ssl_sess_fetch_chunkname = NULL;
+     *      lscf->srv.ssl_sess_fetch_src_key = NULL;
      *
      *      lscf->balancer.handler = NULL;
      *      lscf->balancer.src = { 0, NULL };

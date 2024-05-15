@@ -6,10 +6,21 @@ BEGIN {
     if ($ENV{TEST_NGINX_EVENT_TYPE} && $ENV{TEST_NGINX_EVENT_TYPE} ne 'poll') {
         $SkipReason = "unavailable for the event type '$ENV{TEST_NGINX_EVENT_TYPE}'";
 
+    } elsif ($ENV{TEST_NGINX_USE_HTTP3}) {
+        $SkipReason = "http3 does not support mockeagain";
+
+    } elsif ($ENV{TEST_NGINX_USE_HTTP2}) {
+        $SkipReason = "http2 does not support mockeagain";
+
     } else {
-        $ENV{TEST_NGINX_POSTPONE_OUTPUT} = 1;
-        $ENV{TEST_NGINX_EVENT_TYPE} = 'poll';
-        $ENV{MOCKEAGAIN}='w'
+        if ($ENV{LD_PRELOAD} && $ENV{LD_PRELOAD} =~ /\bmockeagain\.so\b/) {
+            $ENV{TEST_NGINX_POSTPONE_OUTPUT} = 1;
+            $ENV{TEST_NGINX_EVENT_TYPE} = 'poll';
+            $ENV{MOCKEAGAIN}='w'
+        } else {
+            $SkipReason = "'mockeagain.so' does not appear to be preloaded "
+                . "with 'LD_PRELOAD'";
+        }
     }
 }
 
@@ -210,6 +221,50 @@ GET /t
 12345678901234567890123456789012345678901234567890_32.666666666667
 12345678901234567890123456789012345678901234567890_33
 12345678901234567890123456789012345678901234567890_33.333333333333
+--- no_error_log
+[error]
+[alert]
+[crit]
+
+
+
+=== TEST 4: set resp body nil with ngx.arg[1] first
+--- config
+    location /t {
+        content_by_lua_block {
+            ngx.say("Hello World!")
+        }
+
+        body_filter_by_lua_block {
+            ngx.arg[1] = ""
+            ngx.arg[2] = true
+        }
+    }
+--- request
+GET /t
+--- response_body
+--- no_error_log
+[error]
+[alert]
+[crit]
+
+
+
+=== TEST 5: set resp body nil with ngx.arg[2] first
+--- config
+    location /t {
+        content_by_lua_block {
+            ngx.say("Hello World!")
+        }
+
+        body_filter_by_lua_block {
+            ngx.arg[2] = true
+            ngx.arg[1] = ""
+        }
+    }
+--- request
+GET /t
+--- response_body
 --- no_error_log
 [error]
 [alert]

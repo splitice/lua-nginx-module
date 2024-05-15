@@ -4,12 +4,10 @@ Name
 ngx_http_lua_module - Embed the power of Lua into Nginx HTTP Servers.
 
 This module is a core component of [OpenResty](https://openresty.org). If you are using this module,
-then you are essentially using OpenResty.
+then you are essentially using OpenResty :)
 
 *This module is not distributed with the Nginx source.* See
 [the installation instructions](#installation).
-
-This is a core component of OpenResty. If you are using this module, then you are essentially using OpenResty :)
 
 Table of Contents
 =================
@@ -65,8 +63,8 @@ Version
 =======
 
 This document describes ngx_lua
-[v0.10.19](https://github.com/openresty/lua-nginx-module/tags), which was released
-on 3 Nov, 2020.
+[v0.10.25](https://github.com/openresty/lua-nginx-module/tags), which was released
+on 19 June 2023.
 
 Videos
 ======
@@ -309,6 +307,8 @@ Nginx Compatibility
 
 The latest version of this module is compatible with the following versions of Nginx:
 
+* 1.25.x  (last tested: 1.25.1)
+* 1.21.x  (last tested: 1.21.4)
 * 1.19.x  (last tested: 1.19.3)
 * 1.17.x  (last tested: 1.17.8)
 * 1.15.x  (last tested: 1.15.8)
@@ -964,7 +964,6 @@ TODO
 
 * cosocket: implement LuaSocket's unconnected UDP API.
 * cosocket: add support in the context of [init_by_lua*](#init_by_lua).
-* cosocket: implement the `bind()` method for stream-typed cosockets.
 * cosocket: review and merge aviramc's [patch](https://github.com/openresty/lua-nginx-module/pull/290) for adding the `bsdrecv` method.
 * cosocket: add configure options for different strategies of handling the cosocket connection exceeding in the pools.
 * review and apply vadim-pavlov's patch for [ngx.location.capture](#ngxlocationcapture)'s `extra_headers` option
@@ -1166,6 +1165,8 @@ Directives
 * [lua_ssl_ciphers](#lua_ssl_ciphers)
 * [lua_ssl_crl](#lua_ssl_crl)
 * [lua_ssl_protocols](#lua_ssl_protocols)
+* [lua_ssl_certificate](#lua_ssl_certificate)
+* [lua_ssl_certificate_key](#lua_ssl_certificate_key)
 * [lua_ssl_trusted_certificate](#lua_ssl_trusted_certificate)
 * [lua_ssl_verify_depth](#lua_ssl_verify_depth)
 * [lua_ssl_conf_command](#lua_ssl_conf_command)
@@ -3334,12 +3335,50 @@ This directive was first introduced in the `v0.9.11` release.
 
 [Back to TOC](#directives)
 
+lua_ssl_certificate
+-------------------
+
+**syntax:** *lua_ssl_certificate &lt;file&gt;*
+
+**default:** *none*
+
+**context:** *http, server, location*
+
+Specifies the file path to the SSL/TLS certificate in PEM format used for the [tcpsock:sslhandshake](#tcpsocksslhandshake) method.
+
+This directive allows you to specify the SSL/TLS certificate that will be presented to server during the SSL/TLS handshake process.
+
+This directive was first introduced in the `v0.10.26` release.
+
+See also [lua_ssl_certificate_key](#lua_ssl_certificate_key) and [lua_ssl_verify_depth](#lua_ssl_verify_depth).
+
+[Back to TOC](#directives)
+
+lua_ssl_certificate_key
+-----------------------
+
+**syntax:** *lua_ssl_certificate_key &lt;file&gt;*
+
+**default:** *none*
+
+**context:** *http, server, location*
+
+Specifies the file path to the private key associated with the SSL/TLS certificate used in the [tcpsock:sslhandshake](#tcpsocksslhandshake) method.
+
+This directive allows you to specify the private key file corresponding to the SSL/TLS certificate specified by lua_ssl_certificate. The private key should be in PEM format and must match the certificate.
+
+This directive was first introduced in the `v0.10.26` release.
+
+See also [lua_ssl_certificate](#lua_ssl_certificate) and [lua_ssl_verify_depth](#lua_ssl_verify_depth).
+
+[Back to TOC](#directives)
+
 lua_ssl_trusted_certificate
 ---------------------------
 
 **syntax:** *lua_ssl_trusted_certificate &lt;file&gt;*
 
-**default:** *no*
+**default:** *none*
 
 **context:** *http, server, location*
 
@@ -3364,7 +3403,7 @@ Sets the verification depth in the server certificates chain.
 
 This directive was first introduced in the `v0.9.11` release.
 
-See also [lua_ssl_trusted_certificate](#lua_ssl_trusted_certificate).
+See also [lua_ssl_certificate](#lua_ssl_certificate), [lua_ssl_certificate_key](#lua_ssl_certificate_key) and [lua_ssl_trusted_certificate](#lua_ssl_trusted_certificate).
 
 [Back to TOC](#directives)
 
@@ -3676,6 +3715,7 @@ Nginx API for Lua
 * [ngx.shared.DICT.capacity](#ngxshareddictcapacity)
 * [ngx.shared.DICT.free_space](#ngxshareddictfree_space)
 * [ngx.socket.udp](#ngxsocketudp)
+* [udpsock:bind](#udpsockbind)
 * [udpsock:setpeername](#udpsocksetpeername)
 * [udpsock:send](#udpsocksend)
 * [udpsock:receive](#udpsockreceive)
@@ -5424,11 +5464,13 @@ See also [ngx.req.read_body](#ngxreqread_body).
 ngx.req.get_body_data
 ---------------------
 
-**syntax:** *data = ngx.req.get_body_data()*
+**syntax:** *data = ngx.req.get_body_data(max_bytes?)*
 
 **context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, log_by_lua&#42;*
 
 Retrieves in-memory request body data. It returns a Lua string rather than a Lua table holding all the parsed query arguments. Use the [ngx.req.get_post_args](#ngxreqget_post_args) function instead if a Lua table is required.
+
+The optional `max_bytes` argument can be used when you don't need the entire body.
 
 This function returns `nil` if
 
@@ -5597,6 +5639,8 @@ ngx.req.socket
 Returns a read-only cosocket object that wraps the downstream connection. Only [receive](#tcpsockreceive), [receiveany](#tcpsockreceiveany) and [receiveuntil](#tcpsockreceiveuntil) methods are supported on this object.
 
 In case of error, `nil` will be returned as well as a string describing the error.
+
+**Note:** This method will block while waiting for client request body to be fully received. Block time depends on the [client_body_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_timeout) directive and maximum body size specified by the [client_max_body_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size) directive. If read timeout occurs or client body size exceeds the defined limit, this function will not return and `408 Request Time-out` or `413 Request Entity Too Large` response will be returned to the client instead.
 
 The socket object returned by this method is usually used to read the current request's body in a streaming fashion. Do not turn on the [lua_need_request_body](#lua_need_request_body) directive, and do not mix this call with [ngx.req.read_body](#ngxreqread_body) and [ngx.req.discard_body](#ngxreqdiscard_body).
 
@@ -7479,6 +7523,7 @@ ngx.socket.udp
 
 Creates and returns a UDP or datagram-oriented unix domain socket object (also known as one type of the "cosocket" objects). The following methods are supported on this object:
 
+* [bind](#udpsockbind)
 * [setpeername](#udpsocksetpeername)
 * [send](#udpsocksend)
 * [receive](#udpsockreceive)
@@ -7490,6 +7535,36 @@ It is intended to be compatible with the UDP API of the [LuaSocket](http://w3.im
 This feature was first introduced in the `v0.5.7` release.
 
 See also [ngx.socket.tcp](#ngxsockettcp).
+
+[Back to TOC](#nginx-api-for-lua)
+
+udpsock:bind
+------------
+**syntax:** *ok, err = udpsock:bind(address)*
+
+**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, ngx.timer.&#42;, ssl_certificate_by_lua&#42;,ssl_session_fetch_by_lua&#42;,ssl_client_hello_by_lua&#42;*
+
+Just like the standard [proxy_bind](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_bind) directive, this api makes the outgoing connection to a upstream server originate from the specified local IP address.
+
+Only IP addresses can be specified as the `address` argument.
+
+Here is an example for connecting to a TCP server from the specified local IP address:
+
+```nginx
+
+ location /test {
+     content_by_lua_block {
+         local sock = ngx.socket.udp()
+         -- assume "192.168.1.10" is the local ip address
+         local ok, err = sock:bind("192.168.1.10")
+         if not ok then
+             ngx.say("failed to bind: ", err)
+             return
+         end
+         sock:close()
+     }
+ }
+```
 
 [Back to TOC](#nginx-api-for-lua)
 
@@ -7869,11 +7944,11 @@ Set client certificate chain and corresponding private key to the TCP socket obj
 The certificate chain and private key provided will be used later by the [tcpsock:sslhandshake](#tcpsocksslhandshake) method.
 
 * `cert` specify a client certificate chain cdata object that will be used while handshaking with
-remote server. These objects can be created using [ngx.ssl.parse\_pem\_cert](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_cert)
+remote server. These objects can be created using [ngx.ssl.parse\_pem\_cert](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_cert) or [ngx.ssl.parse\_der\_cert](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_der_cert)
 function provided by lua-resty-core. Note that specifying the `cert` option requires
 corresponding `pkey` be provided too. See below.
 * `pkey` specify a private key corresponds to the `cert` option above.
-These objects can be created using [ngx.ssl.parse\_pem\_priv\_key](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_priv_key)
+These objects can be created using [ngx.ssl.parse\_pem\_priv\_key](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_pem_priv_key) or [ngx.ssl.parse\_der\_priv\_key](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/ssl.md#parse_der_priv_key)
 function provided by lua-resty-core.
 
 If both of `cert` and `pkey` are `nil`, this method will clear any existing client certificate and private key
@@ -9321,12 +9396,6 @@ Only the following ngx_lua APIs could be used in `function_name` function of the
 * `ngx.encode_args`
 * `ngx.decode_args`
 * `ngx.quote_sql_str`
-
-* `ngx.re.match`
-* `ngx.re.find`
-* `ngx.re.gmatch`
-* `ngx.re.sub`
-* `ngx.re.gsub`
 
 * `ngx.crc32_short`
 * `ngx.crc32_long`
