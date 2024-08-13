@@ -44,9 +44,6 @@ static ngx_int_t ngx_http_set_location_header(ngx_http_request_t *r,
 
 static ngx_http_lua_set_header_t  ngx_http_lua_set_handlers[] = {
 
-    { ngx_string("Server"),
-                 offsetof(ngx_http_headers_out_t, server),
-                 ngx_http_set_builtin_header },
 
     { ngx_string("Date"),
                  offsetof(ngx_http_headers_out_t, date),
