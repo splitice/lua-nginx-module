@@ -966,7 +966,6 @@ TODO
 * cosocket: add support in the context of [init_by_lua*](#init_by_lua).
 * cosocket: review and merge aviramc's [patch](https://github.com/openresty/lua-nginx-module/pull/290) for adding the `bsdrecv` method.
 * cosocket: add configure options for different strategies of handling the cosocket connection exceeding in the pools.
-* review and apply vadim-pavlov's patch for [ngx.location.capture](#ngxlocationcapture)'s `extra_headers` option
 * use `ngx_hash_t` to optimize the built-in header look-up process for [ngx.req.set_header](#ngxreqset_header), and etc.
 * add `ignore_resp_headers`, `ignore_resp_body`, and `ignore_resp` options to [ngx.location.capture](#ngxlocationcapture) and [ngx.location.capture_multi](#ngxlocationcapture_multi) methods, to allow micro performance tuning on the user side.
 * add automatic Lua code time slicing support by yielding and resuming the Lua VM actively via Lua's debug hooks.
@@ -1012,7 +1011,7 @@ The order in which these modules are added during configuration is important bec
 filtering chain determines the final output, for example. The correct adding order is shown above.
 
 * 3rd-party Lua libraries:
-	* [lua-cjson](http://www.kyne.com.au/~mark/software/lua-cjson.php)
+	* [lua-cjson](https://www.kyne.au/~mark/software/lua-cjson.php)
 
 * Applications:
 	* mysql: create database 'ngx_test', grant all privileges to user 'ngx_test', password is 'ngx_test'
@@ -1144,6 +1143,7 @@ Directives
 * [log_by_lua_file](#log_by_lua_file)
 * [balancer_by_lua_block](#balancer_by_lua_block)
 * [balancer_by_lua_file](#balancer_by_lua_file)
+* [balancer_keepalive](#balancer_keepalive)
 * [lua_need_request_body](#lua_need_request_body)
 * [ssl_client_hello_by_lua_block](#ssl_client_hello_by_lua_block)
 * [ssl_client_hello_by_lua_file](#ssl_client_hello_by_lua_file)
@@ -2711,6 +2711,29 @@ This directive was first introduced in the `v0.10.0` release.
 
 [Back to TOC](#directives)
 
+balancer_keepalive
+------------------
+
+**syntax:** *balancer_keepalive &lt;total-connections&gt;*
+
+**context:** *upstream*
+
+**phase:** *loading-config*
+
+The `total-connections` parameter sets the maximum number of idle
+keepalive connections to upstream servers that are preserved in the cache of
+each worker process. When this number is exceeded, the least recently used
+connections are closed.
+
+It should be particularly noted that the keepalive directive does not limit the
+total number of connections to upstream servers that an nginx worker process
+can open. The connections parameter should be set to a number small enough to
+let upstream servers process new incoming connections as well.
+
+This directive was first introduced in the `v0.10.21` release.
+
+[Back to TOC](#directives)
+
 lua_need_request_body
 ---------------------
 
@@ -3599,7 +3622,7 @@ lua_worker_thread_vm_pool_size
 
 **syntax:** *lua_worker_thread_vm_pool_size &lt;size&gt;*
 
-**default:** *lua_worker_thread_vm_pool_size 100*
+**default:** *lua_worker_thread_vm_pool_size 10*
 
 **context:** *http*
 
@@ -3610,6 +3633,8 @@ Also, it is not allowed to create Lua VMs that exceeds the pool size limit.
 The Lua VM in the VM pool is used to execute Lua code in separate thread.
 
 The pool is global at Nginx worker level. And it is used to reuse Lua VMs between requests.
+
+**Warning:** Each worker thread uses a separate Lua VM and caches the Lua VM for reuse in subsequent operations. Configuring too many worker threads can result in consuming a lot of memory.
 
 [Back to TOC](#directives)
 
@@ -4279,6 +4304,8 @@ argument, which supports the options:
 	specify the subrequest's request body (string value only).
 * `args`
 	specify the subrequest's URI query arguments (both string value and Lua tables are accepted)
+* `headers`
+    specify the subrequest's request headers (Lua table only). this headers will override the original headers of the subrequest.
 * `ctx`
 	specify a Lua table to be the [ngx.ctx](#ngxctx) table for the subrequest. It can be the current request's [ngx.ctx](#ngxctx) table, which effectively makes the parent and its subrequest to share exactly the same context table. This option was first introduced in the `v0.3.1rc25` release.
 * `vars`
@@ -4429,6 +4456,33 @@ Accessing `/lua` will yield the output
 
     dog = hello
     cat = 32
+
+The `headers` option can be used to specify the request headers for the subrequest. The value of this option should be a Lua table where the keys are the header names and the values are the header values. For example,
+
+```lua
+
+location /foo {
+    content_by_lua_block {
+        ngx.print(ngx.var.http_x_test)
+    }
+}
+
+location /lua {
+    content_by_lua_block {
+        local res = ngx.location.capture("/foo", {
+            headers = {
+                ["X-Test"] = "aa",
+            }
+        })
+        ngx.print(res.body)
+    }
+}
+```
+
+Accessing `/lua` will yield the output
+
+
+    aa
 
 
 The `ctx` option can be used to specify a custom Lua table to serve as the [ngx.ctx](#ngxctx) table for the subrequest.
@@ -4787,7 +4841,7 @@ ngx.req.http_version
 
 Returns the HTTP version number for the current request as a Lua number.
 
-Current possible values are 2.0, 1.0, 1.1, and 0.9. Returns `nil` for unrecognized values.
+Current possible values are 3.0, 2.0, 1.0, 1.1, and 0.9. Returns `nil` for unrecognized values.
 
 This method was first introduced in the `v0.7.17` release.
 
@@ -5509,6 +5563,8 @@ If the request body has been read into memory, try calling the [ngx.req.get_body
 
 To force in-file request bodies, try turning on [client_body_in_file_only](http://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_in_file_only).
 
+Note that this function is also work for balancer phase but it needs to call [balancer.recreate_request](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/balancer.md#recreate_request) to make the change take effect after set the request body data or headers.
+
 This function was first introduced in the `v0.3.1rc17` release.
 
 See also [ngx.req.get_body_data](#ngxreqget_body_data).
@@ -5520,13 +5576,15 @@ ngx.req.set_body_data
 
 **syntax:** *ngx.req.set_body_data(data)*
 
-**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;*
+**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, balancer_by_lua&#42;,*
 
 Set the current request's request body using the in-memory data specified by the `data` argument.
 
 If the request body has not been read yet, call [ngx.req.read_body](#ngxreqread_body) first (or turn on [lua_need_request_body](#lua_need_request_body) to force this module to read the request body. This is not recommended however). Additionally, the request body must not have been previously discarded by [ngx.req.discard_body](#ngxreqdiscard_body).
 
 Whether the previous request body has been read into memory or buffered into a disk file, it will be freed or the disk file will be cleaned up immediately, respectively.
+
+Note that this function is also work for balancer phase but it needs to call [balancer.recreate_request](https://github.com/openresty/lua-resty-core/blob/master/lib/ngx/balancer.md#recreate_request) to make the change take effect after set the request body data or headers.
 
 This function was first introduced in the `v0.3.1rc18` release.
 
@@ -5539,7 +5597,7 @@ ngx.req.set_body_file
 
 **syntax:** *ngx.req.set_body_file(file_name, auto_clean?)*
 
-**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;*
+**context:** *rewrite_by_lua&#42;, access_by_lua&#42;, content_by_lua&#42;, balancer_by_lua&#42;,*
 
 Set the current request's request body using the in-file data specified by the `file_name` argument.
 
