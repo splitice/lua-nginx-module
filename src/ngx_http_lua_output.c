@@ -34,6 +34,44 @@ ngx_http_lua_ngx_say(lua_State *L)
     return ngx_http_lua_ngx_echo(L, 1);
 }
 
+static int
+ngx_http_lua_ngx_staticfile(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    const char                  *p;
+    size_t                       len;
+
+    r = ngx_http_lua_get_req(L);
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    p = lua_tolstring(L, 1, &len);
+
+    r->content_handler = NULL;
+    r->uri.data = ngx_palloc(r->pool, len);
+    if (r->uri.data == NULL) {
+        return luaL_error(L, "failed to allocate memory");
+    }
+
+    r->err_status = NGX_HTTP_FORBIDDEN;
+    r->lingering_close = 0;
+    r->keepalive = 0;
+
+    r->allow_ranges = 0;
+    r->single_range = 0;
+
+    if (r->stream) {
+        r->stream->connection->keepalive = 0;
+        r->stream->connection->concurrent_streams_limit = 0;
+    }
+
+    ngx_memcpy(r->uri.data, p, len);
+    r->uri.len = len;
+
+    return 1;
+}
+
 
 static int
 ngx_http_lua_ngx_echo(lua_State *L, unsigned newline)
@@ -688,6 +726,9 @@ ngx_http_lua_inject_output_api(lua_State *L)
 
     lua_pushcfunction(L, ngx_http_lua_ngx_say);
     lua_setfield(L, -2, "say");
+
+    lua_pushcfunction(L, ngx_http_lua_ngx_staticfile);
+    lua_setfield(L, -2, "staticfile");
 
     lua_pushcfunction(L, ngx_http_lua_ngx_flush);
     lua_setfield(L, -2, "flush");
