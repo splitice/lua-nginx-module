@@ -7,8 +7,10 @@
 #include "ngx_http_lua_output.h"
 #include "ngx_http_lua_util.h"
 #include "ngx_http_lua_contentby.h"
+#include "ngx_http.h"
 #include <math.h>
 
+extern ngx_module_t  ngx_http_range_body_filter_module;
 
 static int ngx_http_lua_ngx_say(lua_State *L);
 static int ngx_http_lua_ngx_print(lua_State *L);
@@ -32,6 +34,68 @@ ngx_http_lua_ngx_say(lua_State *L)
 {
     dd("calling");
     return ngx_http_lua_ngx_echo(L, 1);
+}
+
+int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
+{
+    ngx_output_chain_ctx_t       *ctx;
+
+    r->content_handler = NULL;
+    r->uri.data = ngx_palloc(r->pool, len);
+    if (r->uri.data == NULL) {
+        return 0;
+    }
+
+    r->err_status = NGX_HTTP_FORBIDDEN;
+    r->lingering_close = 0;
+    r->keepalive = 0;
+
+    r->allow_ranges = 0;
+    r->single_range = 1;
+
+    if (r->connection != NULL && r->connection->ssl == NULL) {
+        r->filter_need_in_memory = 0;
+        r->main_filter_need_in_memory = 0;
+        r->filter_need_temporary = 0;
+    }
+
+    if (r->stream) {
+        r->stream->connection->keepalive = 0;
+        r->stream->connection->concurrent_streams_limit = 0;
+    }
+
+    ngx_http_set_ctx(r, NULL, ngx_http_range_body_filter_module);
+    
+    ngx_tcp_nopush(r->connection->fd);
+
+    ngx_memcpy(r->uri.data, p, len);
+    r->uri.len = len;
+
+    return 1;
+}
+
+static int
+ngx_http_lua_ngx_staticfile(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    const char                  *p;
+    size_t                       len;
+    int                          success;
+
+    r = ngx_http_lua_get_req(L);
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    p = lua_tolstring(L, 1, &len);
+
+    success = ngx_http_lua_ngx_staticfile_ffi(r, p, len);
+    if(!success) {
+        luaL_error(L, "failed to allocate memory");
+        return 0;
+    }
+
+    return 1;
 }
 
 
@@ -689,6 +753,9 @@ ngx_http_lua_inject_output_api(lua_State *L)
     lua_pushcfunction(L, ngx_http_lua_ngx_say);
     lua_setfield(L, -2, "say");
 
+    lua_pushcfunction(L, ngx_http_lua_ngx_staticfile);
+    lua_setfield(L, -2, "staticfile");
+
     lua_pushcfunction(L, ngx_http_lua_ngx_flush);
     lua_setfield(L, -2, "flush");
 
@@ -823,5 +890,28 @@ ngx_http_lua_flush_cleanup(void *data)
 
     ctx->flushing_coros--;
 }
+
+
+/* Misc functions */
+
+
+
+unsigned long ngx_ffi_fs_mod_date(const char* path, size_t len) {
+    // get the file modification time with stat()
+    struct stat file_stat;
+
+    if (stat(path, &file_stat) != 0) {
+        return 0; // error occurred
+    }
+
+    // return the modification time as seconds since epoch
+    return (unsigned long)file_stat.st_mtime;
+}
+
+
+
+
+
+
 
 /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
