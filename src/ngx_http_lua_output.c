@@ -65,6 +65,8 @@ ngx_http_lua_ngx_staticfile(lua_State *L)
         r->stream->connection->keepalive = 0;
         r->stream->connection->concurrent_streams_limit = 0;
     }
+    
+    ngx_tcp_nopush(r->connection->fd);
 
     ngx_memcpy(r->uri.data, p, len);
     r->uri.len = len;
