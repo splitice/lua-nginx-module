@@ -45,13 +45,13 @@ ngx_http_lua_ssl_init(ngx_log_t *log)
     return NGX_OK;
 }
 
-char* lua_http_domain_sanitize_ffi(const char *domain, size_t len)
+char* lua_http_domain_sanitize_ffi(const char *domain, size_t len, size_t* first_dot)
 {
     if (len == 0) {
         return NULL;
     }
 
-    char *sanitized = ngx_pnalloc(ngx_cycle->pool, len + 1, size_t* first_dot);
+    char *sanitized = ngx_pnalloc(ngx_cycle->pool, len + 1);
     if (sanitized == NULL) {
         return NULL;
     }
@@ -72,7 +72,7 @@ char* lua_http_domain_sanitize_ffi(const char *domain, size_t len)
             sanitized[f++] = domain[i];
         }
     }
-    
+
     sanitized[f] = '\0';
 
     return sanitized;
