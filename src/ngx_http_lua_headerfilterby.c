@@ -237,10 +237,12 @@ ngx_http_lua_header_filter(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "lua header filter for user lua code, uri \"%V\"", &r->uri);
 
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
     llcf = ngx_http_get_module_loc_conf(r, ngx_http_lua_module);
 
     if (llcf->body_filter_handler) {
-        if(r->err_status != NGX_HTTP_FORBIDDEN) {
+        if(r->err_status != NGX_HTTP_FORBIDDEN && (!ctx || !ctx->skip_body_filter)) {
             r->filter_need_in_memory = 1;
         }
     }
@@ -249,8 +251,6 @@ ngx_http_lua_header_filter(ngx_http_request_t *r)
         dd("no header filter handler found");
         return ngx_http_next_header_filter(r);
     }
-
-    ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
 
     dd("ctx = %p", ctx);
 

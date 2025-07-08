@@ -258,7 +258,13 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         if (ctx == NULL) {
             return NGX_ERROR;
         }
+    } else {
+        if(ctx->skip_body_filter) {
+            return ngx_http_next_body_filter(r, in);
+        }
     }
+
+    
 
     if (ctx->seen_last_in_filter) {
         for (/* void */; in; in = in->next) {
