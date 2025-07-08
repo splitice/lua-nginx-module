@@ -78,9 +78,12 @@ int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t
 
     r->allow_ranges = 0;
     r->single_range = 1;
-    r->filter_need_in_memory = 0;
-    r->main_filter_need_in_memory = 0;
-    r->filter_need_temporary = 0;
+
+    if (r->connection != NULL && r->connection->ssl == NULL) {
+        r->filter_need_in_memory = 0;
+        r->main_filter_need_in_memory = 0;
+        r->filter_need_temporary = 0;
+    }
 
     if (r->stream) {
         r->stream->connection->keepalive = 0;
