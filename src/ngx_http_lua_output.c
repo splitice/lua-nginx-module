@@ -36,6 +36,18 @@ ngx_http_lua_ngx_say(lua_State *L)
     return ngx_http_lua_ngx_echo(L, 1);
 }
 
+void ngx_http_lua_ngx_skipbodyfilter_ffi(ngx_http_request_t *r)
+{
+    ngx_http_lua_ctx_t *ctx;
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
+    if (ctx == NULL) {
+        return;
+    }
+
+    ctx->skip_body_filter = 1;
+}
+
 int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
 {
     ngx_output_chain_ctx_t       *ctx;
@@ -98,6 +110,23 @@ ngx_http_lua_ngx_staticfile(lua_State *L)
     return 1;
 }
 
+static int
+ngx_http_lua_ngx_skipbodyfilter(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    const char                  *p;
+    size_t                       len;
+    int                          success;
+
+    r = ngx_http_lua_get_req(L);
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    ngx_http_lua_ngx_skipbodyfilter_ffi(r);    
+
+    return 1;
+}
 
 static int
 ngx_http_lua_ngx_echo(lua_State *L, unsigned newline)
@@ -755,6 +784,9 @@ ngx_http_lua_inject_output_api(lua_State *L)
 
     lua_pushcfunction(L, ngx_http_lua_ngx_staticfile);
     lua_setfield(L, -2, "staticfile");
+
+    lua_pushcfunction(L, ngx_http_lua_ngx_skipbodyfilter);
+    lua_setfield(L, -2, "skip_body_filter");
 
     lua_pushcfunction(L, ngx_http_lua_ngx_flush);
     lua_setfield(L, -2, "flush");
