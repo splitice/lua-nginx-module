@@ -7,8 +7,10 @@
 #include "ngx_http_lua_output.h"
 #include "ngx_http_lua_util.h"
 #include "ngx_http_lua_contentby.h"
+#include "ngx_http.h"
 #include <math.h>
 
+extern ngx_module_t  ngx_http_range_body_filter_module;
 
 static int ngx_http_lua_ngx_say(lua_State *L);
 static int ngx_http_lua_ngx_print(lua_State *L);
@@ -36,6 +38,8 @@ ngx_http_lua_ngx_say(lua_State *L)
 
 int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
 {
+    ngx_output_chain_ctx_t       *ctx;
+
     r->content_handler = NULL;
     r->uri.data = ngx_palloc(r->pool, len);
     if (r->uri.data == NULL) {
@@ -47,12 +51,17 @@ int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t
     r->keepalive = 0;
 
     r->allow_ranges = 0;
-    r->single_range = 0;
+    r->single_range = 1;
+    r->filter_need_in_memory = 0;
+    r->main_filter_need_in_memory = 0;
+    r->filter_need_temporary = 0;
 
     if (r->stream) {
         r->stream->connection->keepalive = 0;
         r->stream->connection->concurrent_streams_limit = 0;
     }
+
+    ngx_http_set_ctx(r, NULL, ngx_http_range_body_filter_module);
     
     ngx_tcp_nopush(r->connection->fd);
 
