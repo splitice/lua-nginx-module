@@ -705,6 +705,7 @@ typedef struct ngx_http_lua_ctx_s {
                                                     is acquired */
     unsigned         seen_body_data:1;
     unsigned         skip_body_filter:1;
+    unsigned         skip_header_filter:1;
 } ngx_http_lua_ctx_t;
 
 

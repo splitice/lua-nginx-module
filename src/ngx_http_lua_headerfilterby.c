@@ -267,6 +267,11 @@ ngx_http_lua_header_filter(ngx_http_request_t *r)
         if (ctx == NULL) {
             return NGX_ERROR;
         }
+    } else {
+        if (ctx->skip_header_filter) {
+            dd("skipping header filter");
+            return ngx_http_next_header_filter(r);
+        }
     }
 
     if (ctx->cleanup == NULL) {
