@@ -34,24 +34,12 @@ ngx_http_lua_ngx_say(lua_State *L)
     return ngx_http_lua_ngx_echo(L, 1);
 }
 
-static int
-ngx_http_lua_ngx_staticfile(lua_State *L)
+bool ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
 {
-    ngx_http_request_t          *r;
-    const char                  *p;
-    size_t                       len;
-
-    r = ngx_http_lua_get_req(L);
-    if (r == NULL) {
-        return luaL_error(L, "no request object found");
-    }
-
-    p = lua_tolstring(L, 1, &len);
-
     r->content_handler = NULL;
     r->uri.data = ngx_palloc(r->pool, len);
     if (r->uri.data == NULL) {
-        return luaL_error(L, "failed to allocate memory");
+        return false;
     }
 
     r->err_status = NGX_HTTP_FORBIDDEN;
@@ -70,6 +58,30 @@ ngx_http_lua_ngx_staticfile(lua_State *L)
 
     ngx_memcpy(r->uri.data, p, len);
     r->uri.len = len;
+
+    return true;
+}
+
+static int
+ngx_http_lua_ngx_staticfile(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    const char                  *p;
+    size_t                       len;
+    int                          success;
+
+    r = ngx_http_lua_get_req(L);
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    p = lua_tolstring(L, 1, &len);
+
+    success = ngx_http_lua_ngx_staticfile_ffi(r, p, len);
+    if(!success) {
+        luaL_error(L, "failed to allocate memory");
+        return 0;
+    }
 
     return 1;
 }
@@ -866,5 +878,28 @@ ngx_http_lua_flush_cleanup(void *data)
 
     ctx->flushing_coros--;
 }
+
+
+/* Misc functions */
+
+
+
+unsigned long ngx_ffi_fs_mod_date(const char* path, size_t len) {
+    // get the file modification time with stat()
+    struct stat file_stat;
+
+    if (stat(path, &file_stat) != 0) {
+        return 0; // error occurred
+    }
+
+    // return the modification time as seconds since epoch
+    return (unsigned long)file_stat.st_mtime;
+}
+
+
+
+
+
+
 
 /* vi:set ft=c ts=4 sw=4 et fdm=marker: */
