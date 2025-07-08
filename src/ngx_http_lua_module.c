@@ -794,7 +794,7 @@ static ngx_int_t
 ngx_http_lua_init(ngx_conf_t *cf)
 {
     int                         multi_http_blocks;
-    ngx_int_t                   rc;
+    ngx_int_t                   rc, i;
     ngx_array_t                *arr;
     ngx_http_handler_pt        *h;
     volatile ngx_cycle_t       *saved_cycle;
@@ -850,12 +850,16 @@ ngx_http_lua_init(ngx_conf_t *cf)
     }
 
     if (lmcf->requires_rewrite) {
-        h = ngx_array_push(&cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers);
-        if (h == NULL) {
-            return NGX_ERROR;
+        
+        ngx_array_push(&cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers);
+
+        for(i=0; i<cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers.nelts - 1; i++) {
+            ((ngx_http_handler_pt*)cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers.elts)[i+1] =
+                ((ngx_http_handler_pt*)cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers.elts)[i];
         }
 
-        *h = ngx_http_lua_rewrite_handler;
+        ((ngx_http_handler_pt*)cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers.elts)[0] = 
+            ngx_http_lua_rewrite_handler;        
     }
 
     if (lmcf->requires_access) {
