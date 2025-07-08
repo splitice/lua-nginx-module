@@ -34,12 +34,12 @@ ngx_http_lua_ngx_say(lua_State *L)
     return ngx_http_lua_ngx_echo(L, 1);
 }
 
-bool ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
+int ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_t len)
 {
     r->content_handler = NULL;
     r->uri.data = ngx_palloc(r->pool, len);
     if (r->uri.data == NULL) {
-        return false;
+        return 0;
     }
 
     r->err_status = NGX_HTTP_FORBIDDEN;
@@ -59,7 +59,7 @@ bool ngx_http_lua_ngx_staticfile_ffi(ngx_http_request_t *r, const char *p, size_
     ngx_memcpy(r->uri.data, p, len);
     r->uri.len = len;
 
-    return true;
+    return 1;
 }
 
 static int
