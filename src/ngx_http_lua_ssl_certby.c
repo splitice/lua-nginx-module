@@ -288,7 +288,7 @@ ngx_http_lua_ssl_cert_handler(ngx_ssl_conn_t *ssl_conn, void *data)
     if (SSL_set_ex_data(c->ssl->connection, ngx_http_lua_ssl_ctx_index, cctx)
         == 0)
     {
-        ngx_ssl_error(NGX_LOG_ALERT, c->log, 0, "SSL_set_ex_data() failed");
+        ngx_ssl_error(NGX_LOG_ALERT, c->log, 0, "ngx_http_lua_ssl_cert_handler SSL_set_ex_data() failed");
         goto failed;
     }
 
@@ -722,6 +722,67 @@ failed:
 #endif
 }
 
+EVP_PKEY*
+ngx_http_lua_ffi_parse_private_key(const char *data, size_t len, char **err)
+{
+    BIO               *bio = NULL;
+    EVP_PKEY          *pkey = NULL;
+
+    bio = BIO_new_mem_buf((char *) data, len);
+    if (bio == NULL) {
+        *err = "BIO_new_mem_buf() failed";
+        goto failed;
+    }
+
+    pkey = d2i_PrivateKey_bio(bio, NULL);
+    if (pkey == NULL) {
+        *err = "d2i_PrivateKey_bio() failed";
+        goto failed;
+    }
+
+    BIO_free(bio);
+
+    return pkey;
+
+failed:
+
+    if (pkey) {
+        EVP_PKEY_free(pkey);
+    }
+
+    if (bio) {
+        BIO_free(bio);
+    }
+
+    ERR_clear_error();
+
+    return NULL;
+}
+
+int ngx_http_lua_ffi_apply_private_key(ngx_http_request_t *r, EVP_PKEY* pkey) {
+    ngx_ssl_conn_t    *ssl_conn;
+
+    if (r->connection == NULL || r->connection->ssl == NULL) {
+        return NGX_ERROR;
+    }
+
+    ssl_conn = r->connection->ssl->connection;
+    if (ssl_conn == NULL) {
+        return NGX_ERROR;
+    }
+
+    if (SSL_use_PrivateKey(ssl_conn, pkey) == 0) {
+        return NGX_ERROR;
+    }
+
+    return  NGX_OK;
+}
+
+void ngx_http_lua_ffi_free_private_key(EVP_PKEY* pkey) {
+    if (pkey) {
+        EVP_PKEY_free(pkey);
+    }
+}
 
 int
 ngx_http_lua_ffi_ssl_set_der_private_key(ngx_http_request_t *r,
