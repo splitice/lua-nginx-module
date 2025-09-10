@@ -82,7 +82,7 @@ static ngx_int_t ngx_http_lua_balancer_init(ngx_conf_t *cf,
 static ngx_int_t ngx_http_lua_balancer_init_peer(ngx_http_request_t *r,
     ngx_http_upstream_srv_conf_t *us);
 static ngx_int_t ngx_http_lua_balancer_get_peer(ngx_peer_connection_t *pc,
-    void *data);
+    void *data, ngx_str_t *pserver);
 static ngx_int_t ngx_http_lua_balancer_by_chunk(lua_State *L,
     ngx_http_request_t *r);
 static void ngx_http_lua_balancer_free_peer(ngx_peer_connection_t *pc,
@@ -382,7 +382,7 @@ ngx_http_lua_balancer_init_peer(ngx_http_request_t *r,
 
 
 static ngx_int_t
-ngx_http_lua_balancer_get_peer(ngx_peer_connection_t *pc, void *data)
+ngx_http_lua_balancer_get_peer(ngx_peer_connection_t *pc, void *data, ngx_str_t *pserver)
 {
     void                               *pdata;
     lua_State                          *L;
@@ -502,7 +502,7 @@ ngx_http_lua_balancer_get_peer(ngx_peer_connection_t *pc, void *data)
         return NGX_OK;
     }
 
-    rc = bp->original_get_peer(pc, bp->data);
+    rc = bp->original_get_peer(pc, bp->data, pserver);
     if (rc == NGX_ERROR) {
         return rc;
     }
