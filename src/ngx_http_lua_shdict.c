@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) Yichun Zhang (agentzh)
  */
@@ -21,6 +20,7 @@ static ngx_int_t ngx_http_lua_shdict_lookup(ngx_shm_zone_t *shm_zone,
     ngx_uint_t hash, u_char *kdata, size_t klen,
     ngx_http_lua_shdict_node_t **sdp);
 static int ngx_http_lua_shdict_flush_expired(lua_State *L);
+static int ngx_http_lua_shdict_flush_expired_safe_wrapper(lua_State *L);
 static int ngx_http_lua_shdict_get_keys(lua_State *L);
 static int ngx_http_lua_shdict_lpush(lua_State *L);
 static int ngx_http_lua_shdict_rpush(lua_State *L);
@@ -350,6 +350,12 @@ ngx_http_lua_inject_shdict_api(ngx_http_lua_main_conf_t *lmcf, lua_State *L)
         lua_pushcfunction(L, ngx_http_lua_shdict_flush_expired);
         lua_setfield(L, -2, "flush_expired");
 
+        lua_pushcfunction(L, ngx_http_lua_shdict_flush_expired_safe_wrapper);
+        lua_setfield(L, -2, "flush_expired_safe");
+
+
+
+
         lua_pushcfunction(L, ngx_http_lua_shdict_get_keys);
         lua_setfield(L, -2, "get_keys");
 
@@ -496,6 +502,94 @@ ngx_http_lua_shdict_flush_expired(lua_State *L)
     return 1;
 }
 
+/*
+ * Flush expired items from the shared dictionary without holding the lock for the entire iteration.
+ * This function collects expired entries in batches and deletes them outside the lock after re-checking.
+ */
+ngx_int_t
+ngx_http_lua_shdict_flush_expired_safe(ngx_http_lua_shdict_ctx_t *ctx, ngx_uint_t batch_size)
+{
+    ngx_queue_t                *q, *safe_next;
+    ngx_http_lua_shdict_node_t *sd;
+    ngx_uint_t                  flushed = 0;
+    ngx_uint_t                  batch_count;
+    ngx_queue_t                *expired_nodes[batch_size];
+    ngx_time_t                 *tp;
+    ngx_rbtree_t               *tree;
+    ngx_rbtree_node_t          *node;
+
+    tree = &ctx->sh->rbtree;
+    tp = ngx_timeofday();
+
+    while (1) {
+        batch_count = 0;
+
+        ngx_shmtx_lock(&ctx->shpool->mutex);
+
+        for (q = ngx_queue_head(&ctx->sh->lru_queue);
+             q != ngx_queue_sentinel(&ctx->sh->lru_queue) && batch_count < batch_size;
+             q = ngx_queue_next(q))
+        {
+            sd = ngx_queue_data(q, ngx_http_lua_shdict_node_t, queue);
+            if (sd->expires == 0 || sd->expires > (uint64_t) tp->sec) {
+                continue;
+            }
+            expired_nodes[batch_count++] = q;
+        }
+
+        ngx_shmtx_unlock(&ctx->shpool->mutex);
+
+        if (batch_count == 0) {
+            break;
+        }
+
+        for (ngx_uint_t i = 0; i < batch_count; i++) {
+            q = expired_nodes[i];
+            ngx_shmtx_lock(&ctx->shpool->mutex);
+            // Re-check expiration and validity
+            sd = ngx_queue_data(q, ngx_http_lua_shdict_node_t, queue);
+            tp = ngx_timeofday();
+            if (sd->expires != 0 && sd->expires <= (uint64_t) tp->sec) {
+                node = (ngx_rbtree_node_t *) ((u_char *) sd - offsetof(ngx_rbtree_node_t, color));
+                ngx_rbtree_delete(tree, node);
+                ngx_queue_remove(q);
+                ngx_slab_free_locked(ctx->shpool, node);
+                flushed++;
+            }
+            ngx_shmtx_unlock(&ctx->shpool->mutex);
+        }
+    }
+
+    return flushed;
+}
+
+
+/*
+ * This function is used to flush expired items in the shared dictionary.
+ * It calls ngx_http_lua_shdict_flush_expired_safe with a reasonable batch size.
+ */
+static int
+ngx_http_lua_shdict_flush_expired_safe_wrapper(lua_State *L)
+{
+    ngx_http_lua_shdict_ctx_t   *ctx;
+    ngx_shm_zone_t              *zone;
+    int                          flushed;
+
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    zone = ngx_http_lua_shdict_get_zone(L, 1);
+    if (zone == NULL) {
+        return luaL_error(L, "bad user data for the ngx_shm_zone_t pointer");
+    }
+
+    ctx = zone->data;
+
+    flushed = ngx_http_lua_shdict_flush_expired_safe(ctx, 256);
+
+    lua_pushinteger(L, flushed);
+
+    return 1;
+}
 
 /*
  * This trades CPU for memory. This is potentially slow. O(2n)
@@ -1513,7 +1607,6 @@ insert:
     node = ngx_slab_alloc_locked(ctx->shpool, n);
 
     if (node == NULL) {
-
         if (op & NGX_HTTP_LUA_SHDICT_SAFE_STORE) {
             ngx_shmtx_unlock(&ctx->shpool->mutex);
 
@@ -1546,7 +1639,6 @@ insert:
     }
 
 allocated:
-
     sd = (ngx_http_lua_shdict_node_t *) &node->color;
 
     node->key = hash;
@@ -2257,6 +2349,7 @@ ngx_http_lua_shdict_peek(ngx_shm_zone_t *shm_zone, ngx_uint_t hash,
 {
     ngx_int_t                    rc;
     ngx_rbtree_node_t           *node, *sentinel;
+
     ngx_http_lua_shdict_ctx_t   *ctx;
     ngx_http_lua_shdict_node_t  *sd;
 
