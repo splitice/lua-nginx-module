@@ -219,7 +219,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close

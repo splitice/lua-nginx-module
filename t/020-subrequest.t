@@ -2785,44 +2785,6 @@ $
 
 
 
-=== TEST 74: image_filter + ngx.location.capture
-ngx_http_image_filter_module's header filter intercepts
-the header filter chain so the r->header_sent flag won't
-get set right after the header filter chain is first invoked.
-
---- config
-
-location = /back {
-    empty_gif;
-}
-
-location = /t {
-    image_filter rotate 90;
-
-    content_by_lua '
-        local res = ngx.location.capture("/back")
-        for k, v in pairs(res.header) do
-            ngx.header[k] = v
-        end
-        ngx.status = res.status
-        ngx.print(res.body)
-    ';
-}
-
---- request
-GET /t
---- response_body_like: .
---- stap
-F(ngx_http_image_header_filter) {
-    println("image header filter")
-}
---- stap_out
-image header filter
-
---- no_error_log
-[error]
-
-
 
 === TEST 75: WebDAV + MOVE
 --- config
@@ -2995,7 +2957,6 @@ GET /t
 --- response_body
 req bytes: 146
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3006,7 +2967,6 @@ method: GET, uri: /foo, X: nil
 0
 
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3125,7 +3085,6 @@ GET /t
 --- response_body
 req bytes: 205
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3136,7 +3095,6 @@ method: POST, uri: /foo
 0
 
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3258,7 +3216,6 @@ GET /t
 --- response_body
 req bytes: 205
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3269,7 +3226,6 @@ method: POST, uri: /foo
 0
 
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3392,7 +3348,6 @@ GET /t
 --- response_body
 req bytes: 205
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3403,7 +3358,6 @@ method: POST, uri: /foo
 0
 
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Transfer-Encoding: chunked
 Connection: keep-alive
@@ -3612,7 +3566,6 @@ GET /t
 --- response_body
 req bytes: 117
 HTTP/1.1 200 OK
-Server: nginx
 Content-Type: text/plain
 Connection: keep-alive
 

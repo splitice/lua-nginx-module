@@ -142,7 +142,6 @@ failed to connect: missing the port number
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close

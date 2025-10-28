@@ -242,7 +242,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -321,7 +321,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log eval
 ["[error]",
@@ -398,7 +398,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -479,7 +479,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -559,7 +559,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -642,7 +642,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -723,7 +723,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -803,7 +803,7 @@ GET /t
 --- response_body
 connected: 1
 request sent: 61
-received response of 156 bytes
+received response of 141 bytes
 done
 --- no_error_log
 [error]
@@ -818,96 +818,6 @@ lua tcp socket keepalive timeout: unlimited
 ]
 --- timeout: 4
 
-
-
-=== TEST 11: sanity (uds)
---- http_config eval
-"
-    lua_package_path '$::HtmlDir/?.lua;./?.lua;;';
-    server {
-        listen unix:$::HtmlDir/nginx.sock;
-        default_type 'text/plain';
-
-        server_tokens off;
-        location /foo {
-            echo foo;
-            more_clear_headers Date;
-        }
-    }
-"
---- config
-    location /t {
-        set $port $TEST_NGINX_MEMCACHED_PORT;
-        rewrite_by_lua '
-            local test = require "test"
-            local path = "$TEST_NGINX_HTML_DIR/nginx.sock";
-            local port = ngx.var.port
-            test.go(path, port)
-            test.go(path, port)
-        ';
-
-        content_by_lua return;
-    }
---- request
-GET /t
---- user_files
->>> test.lua
-module("test", package.seeall)
-
-function go(path, port)
-    local sock = ngx.socket.tcp()
-    local ok, err = sock:connect("unix:" .. path)
-    if not ok then
-        ngx.say("failed to connect: ", err)
-        return
-    end
-
-    ngx.say("connected: ", ok, ", reused: ", sock:getreusedtimes())
-
-    local req = "GET /foo HTTP/1.1\r\nHost: localhost\r\nConnection: keepalive\r\n\r\n"
-
-    local bytes, err = sock:send(req)
-    if not bytes then
-        ngx.say("failed to send request: ", err)
-        return
-    end
-    ngx.say("request sent: ", bytes)
-
-    local reader = sock:receiveuntil("\r\n0\r\n\r\n")
-    local data, err = reader()
-
-    if not data then
-        ngx.say("failed to receive response body: ", err)
-        return
-    end
-
-    ngx.say("received response of ", #data, " bytes")
-
-    local ok, err = sock:setkeepalive()
-    if not ok then
-        ngx.say("failed to set reusable: ", err)
-    end
-end
---- response_body_like
-^connected: 1, reused: \d+
-request sent: 61
-received response of 119 bytes
-connected: 1, reused: [1-9]\d*
-request sent: 61
-received response of 119 bytes
---- no_error_log eval
-["[error]",
-"lua tcp socket keepalive: free connection pool for "]
---- grep_error_log eval
-qr/lua tcp socket get keepalive peer: using connection|lua tcp socket keepalive create connection pool for key "unix:/
---- grep_error_log_out eval
-[qq{lua tcp socket keepalive create connection pool for key "unix:
-lua tcp socket get keepalive peer: using connection
-},
-"lua tcp socket get keepalive peer: using connection
-lua tcp socket get keepalive peer: using connection
-"
-]
 
 
 

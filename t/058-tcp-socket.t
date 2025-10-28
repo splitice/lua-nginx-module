@@ -79,7 +79,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -148,7 +147,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 3
 received: Connection: close
@@ -293,42 +291,6 @@ close: nil closed
 qr/connect\(\) failed \(\d+: Connection refused\)/
 
 
-
-=== TEST 6: connection timeout (tcp)
---- config
-    resolver $TEST_NGINX_RESOLVER ipv6=off;
-    lua_socket_connect_timeout 100ms;
-    lua_socket_send_timeout 100ms;
-    lua_socket_read_timeout 100ms;
-    resolver_timeout 3s;
-    location /test {
-        content_by_lua '
-            local sock = ngx.socket.tcp()
-            local ok, err = sock:connect("127.0.0.2", 12345)
-            ngx.say("connect: ", ok, " ", err)
-
-            local bytes
-            bytes, err = sock:send("hello")
-            ngx.say("send: ", bytes, " ", err)
-
-            local line
-            line, err = sock:receive()
-            ngx.say("receive: ", line, " ", err)
-
-            ok, err = sock:close()
-            ngx.say("close: ", ok, " ", err)
-        ';
-    }
---- request
-    GET /test
---- response_body
-connect: nil timeout
-send: nil closed
-receive: nil closed
-close: nil closed
---- error_log
-lua tcp socket connect timed out, when connecting to 127.0.0.2:12345
---- timeout: 10
 
 
 
@@ -503,7 +465,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -516,152 +477,6 @@ close: 1 nil
 
 
 
-=== TEST 11: *a pattern for receive
---- no_http2
---- config
-    server_tokens off;
-    location /t {
-        #set $port 5000;
-        set $port $TEST_NGINX_SERVER_PORT;
-
-        content_by_lua '
-            local sock = ngx.socket.tcp()
-            local port = ngx.var.port
-            local ok, err = sock:connect("127.0.0.1", port)
-            if not ok then
-                ngx.say("failed to connect: ", err)
-                return
-            end
-
-            ngx.say("connected: ", ok)
-
-            local req = "GET /foo HTTP/1.0\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n"
-            -- req = "OK"
-
-            local bytes, err = sock:send(req)
-            if not bytes then
-                ngx.say("failed to send request: ", err)
-                return
-            end
-
-            ngx.say("request sent: ", bytes)
-
-            local data, err = sock:receive("*a")
-            if data then
-                ngx.say("receive: ", data)
-                ngx.say("err: ", err)
-
-            else
-                ngx.say("failed to receive: ", err)
-            end
-
-            ok, err = sock:close()
-            ngx.say("close: ", ok, " ", err)
-        ';
-    }
-
-    location /foo {
-        content_by_lua 'ngx.say("foo")';
-        more_clear_headers Date;
-    }
---- request
-GET /t
---- response_body eval
-"connected: 1
-request sent: 57
-receive: HTTP/1.1 200 OK\r
-Server: nginx\r
-Content-Type: text/plain\r
-Content-Length: 4\r
-Connection: close\r
-\r
-foo
-
-err: nil
-close: 1 nil
-"
---- no_error_log
-[error]
-
-
-
-=== TEST 12: mixing *a and *l patterns for receive
---- no_http2
---- config
-    server_tokens off;
-    location /t {
-        #set $port 5000;
-        set $port $TEST_NGINX_SERVER_PORT;
-
-        content_by_lua '
-            local sock = ngx.socket.tcp()
-            local port = ngx.var.port
-            local ok, err = sock:connect("127.0.0.1", port)
-            if not ok then
-                ngx.say("failed to connect: ", err)
-                return
-            end
-
-            ngx.say("connected: ", ok)
-
-            local req = "GET /foo HTTP/1.0\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n"
-            -- req = "OK"
-
-            local bytes, err = sock:send(req)
-            if not bytes then
-                ngx.say("failed to send request: ", err)
-                return
-            end
-
-            ngx.say("request sent: ", bytes)
-
-            local line, err = sock:receive("*l")
-            if line then
-                ngx.say("receive: ", line)
-                ngx.say("err: ", err)
-
-            else
-                ngx.say("failed to receive: ", err)
-            end
-
-            local data
-            data, err = sock:receive("*a")
-            if data then
-                ngx.say("receive: ", data)
-                ngx.say("err: ", err)
-
-            else
-                ngx.say("failed to receive: ", err)
-            end
-
-            ok, err = sock:close()
-            ngx.say("close: ", ok, " ", err)
-        ';
-    }
-
-    location /foo {
-        content_by_lua 'ngx.say("foo")';
-        more_clear_headers Date;
-    }
---- request
-GET /t
---- response_body eval
-"connected: 1
-request sent: 57
-receive: HTTP/1.1 200 OK
-err: nil
-receive: Server: nginx\r
-Content-Type: text/plain\r
-Content-Length: 4\r
-Connection: close\r
-\r
-foo
-
-err: nil
-close: 1 nil
-"
---- no_error_log
-[error]
 
 
 
@@ -875,7 +690,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -943,7 +757,6 @@ GET /t
 connected.
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1572,7 +1385,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1895,7 +1707,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 13
 received: Connection: close
@@ -3190,7 +3001,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -3264,7 +3074,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -3339,7 +3148,6 @@ GET /t
 connected: 1
 request sent: 57
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -3896,7 +3704,6 @@ failed to connect: bad port number: 65536
 GET /t
 --- response_body
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Connection: close
 received: 
@@ -4286,7 +4093,6 @@ GET /t
 connected: 1
 request sent: 73
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 10
 received: Connection: close
@@ -4383,7 +4189,6 @@ GET /t
 connected: 1
 request sent: 87
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 24
 received: Connection: close

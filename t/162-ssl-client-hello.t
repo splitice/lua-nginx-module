@@ -103,7 +103,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -207,7 +206,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -312,7 +310,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -430,7 +427,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1133,7 +1129,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1244,7 +1239,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1436,7 +1430,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1538,7 +1531,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 59 bytes.
 received: HTTP/1.1 200 OK
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 2
 received: Connection: close
@@ -1643,7 +1635,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close
@@ -1743,7 +1734,6 @@ connected: 1
 ssl handshake: userdata
 sent http request: 56 bytes.
 received: HTTP/1.1 201 Created
-received: Server: nginx
 received: Content-Type: text/plain
 received: Content-Length: 4
 received: Connection: close

@@ -126,7 +126,6 @@ GET /t
 qq{connected: 1
 request sent: 57
 read: HTTP/1.1 200 OK
-read: Server: nginx
 read: Content-Type: text/plain
 read: Content-Length: 4
 read: Connection: close

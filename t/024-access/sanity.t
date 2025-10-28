@@ -524,20 +524,6 @@ GET /lua
 
 
 
-=== TEST 28: auth_request runs before ngx_access
---- config
-    location /lua {
-        deny all;
-
-        auth_request /auth;
-
-        content_by_lua return;
-    }
---- request
-GET /lua
---- response_body_like: 403 Forbidden
---- error_code: 403
---- SKIP
 
 
 
