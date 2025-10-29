@@ -882,10 +882,10 @@ end
 --- response_body
 connected: 1, reused: 0
 request sent: 61
-received response of 119 bytes
+received response of 104 bytes
 connected: 1, reused: 1
 request sent: 61
-received response of 119 bytes
+received response of 104 bytes
 --- no_error_log eval
 ["[error]",
 "lua tcp socket keepalive: free connection pool for "]
