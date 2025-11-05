@@ -96,7 +96,7 @@ char *
 ngx_http_lua_ssl_client_hello_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf)
 {
-#ifndef SSL_ERROR_WANT_CLIENT_HELLO_CB
+#if !defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) && !defined(OPENSSL_IS_AWSLC)
 
     ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
                   "at least OpenSSL 1.1.1 required but found "
@@ -451,7 +451,7 @@ ngx_http_lua_log_ssl_client_hello_error(ngx_log_t *log,
     }
 
     #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
-    #ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+    #if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
     // add host:
     if (c->ssl && c->ssl->connection) {
         remaining = 0;
@@ -610,7 +610,7 @@ ngx_http_lua_ffi_ssl_get_client_hello_server_name(ngx_http_request_t *r,
     return NGX_ERROR;
 #else
     ngx_ssl_conn_t          *ssl_conn;
-#ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+#if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
     const unsigned char     *p;
     size_t                   remaining, len;
 #endif
@@ -628,7 +628,7 @@ ngx_http_lua_ffi_ssl_get_client_hello_server_name(ngx_http_request_t *r,
 
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
 
-#ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+#if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
     remaining = 0;
 
     /* This code block is taken from OpenSSL's client_hello_select_server_ctx()
@@ -713,7 +713,7 @@ ngx_http_lua_ffi_ssl_get_client_hello_ext(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-#ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+#if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
     if (SSL_client_hello_get0_ext(ssl_conn, type, out, outlen) == 0) {
         return NGX_DECLINED;
     }

@@ -1252,7 +1252,7 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
   #else
 
-  #ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+  #if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
     if (conf->srv.ssl_client_hello_handler) {
           SSL_CTX_set_client_hello_cb(sscf->ssl.ctx,
                                       ngx_http_lua_ssl_client_hello_handler,
@@ -1323,7 +1323,7 @@ ngx_http_lua_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
 #else
 
-#   ifdef SSL_ERROR_WANT_CLIENT_HELLO_CB
+#   if defined(SSL_ERROR_WANT_CLIENT_HELLO_CB) || defined(OPENSSL_IS_AWSLC)
 
             SSL_CTX_set_client_hello_cb(sscf->ssl.ctx,
                                         ngx_http_lua_ssl_client_hello_handler,
