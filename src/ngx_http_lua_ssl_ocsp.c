@@ -66,7 +66,7 @@ ngx_http_lua_ffi_ssl_get_ocsp_responder_from_der_chain(
         goto done;
     }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L || defined(OPENSSL_IS_AWSLC)
     s = sk_OPENSSL_STRING_value(aia, 0);
 #else
     s = sk_value(aia, 0);
@@ -511,7 +511,7 @@ ngx_http_lua_ffi_ssl_set_ocsp_status_resp(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-#ifdef SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE
+#if defined(SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE) || defined(OPENSSL_IS_AWSLC)
     if (SSL_get_tlsext_status_type(ssl_conn) == -1) {
 #else
     if (ssl_conn->tlsext_status_type == -1) {

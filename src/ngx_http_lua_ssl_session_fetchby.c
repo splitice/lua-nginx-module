@@ -175,7 +175,7 @@ ngx_http_lua_ssl_sess_fetch_by_lua(ngx_conf_t *cf, ngx_command_t *cmd,
 /* cached session fetching callback to be set with SSL_CTX_sess_set_get_cb */
 ngx_ssl_session_t *
 ngx_http_lua_ssl_sess_fetch_handler(ngx_ssl_conn_t *ssl_conn,
-#if OPENSSL_VERSION_NUMBER >= 0x10100003L
+#if OPENSSL_VERSION_NUMBER >= 0x10100003L || defined(OPENSSL_IS_AWSLC)
     const
 #endif
     u_char *id, int len, int *copy)

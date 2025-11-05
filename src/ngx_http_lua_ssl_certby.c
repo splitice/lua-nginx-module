@@ -593,8 +593,16 @@ ngx_http_lua_ffi_ssl_clear_certs(ngx_http_request_t *r, char **err)
         return NGX_ERROR;
     }
 
+
+#   ifdef OPENSSL_IS_AWSLC
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "ssl cert: ignoring clear request");
+    *err = NULL;
+    return NGX_OK;
+#   else
     SSL_certs_clear(ssl_conn);
     return NGX_OK;
+#   endif
 
 #   endif  /* OPENSSL_VERSION_NUMBER < 0x1000205fL */
 #endif
@@ -648,6 +656,9 @@ ngx_http_lua_ffi_ssl_set_der_certificate(ngx_http_request_t *r,
 
     if (SSL_use_certificate(ssl_conn, x509) == 0) {
         *err = "SSL_use_certificate() failed";
+        
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "ssl cert: set der certificate failed: %d", SSL_get_error(ssl_conn, 0));
         goto failed;
     }
 
@@ -660,6 +671,10 @@ ngx_http_lua_ffi_ssl_set_der_certificate(ngx_http_request_t *r,
 
     X509_free(x509);
     x509 = NULL;
+
+#   ifdef OPENSSL_IS_AWSLC
+    SSL_clear_chain_certs(ssl_conn);
+#   endif
 
     /* read rest of the chain */
 
@@ -1439,10 +1454,17 @@ ngx_http_lua_ffi_set_cert(ngx_http_request_t *r,
 
     if (SSL_use_certificate(ssl_conn, x509) == 0) {
         *err = "SSL_use_certificate() failed";
+        
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "ssl cert: set certificate failed: %d", SSL_get_error(ssl_conn, 0));
         goto failed;
     }
 
     x509 = NULL;
+
+#   ifdef OPENSSL_IS_AWSLC
+    SSL_clear_chain_certs(ssl_conn);
+#   endif
 
     /* read rest of the chain */
 

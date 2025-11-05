@@ -254,7 +254,7 @@ ngx_http_lua_ssl_sess_store_handler(ngx_ssl_conn_t *ssl_conn,
         cctx->ctx_ref = LUA_NOREF;
     }
 
-#if OPENSSL_VERSION_NUMBER >= 0x1000200fL
+#if OPENSSL_VERSION_NUMBER >= 0x1000200fL || defined(OPENSSL_IS_AWSLC)
     sess_id = SSL_SESSION_get_id(sess, &sess_id_len);
 #else
     sess_id = sess->session_id;
