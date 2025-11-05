@@ -648,6 +648,9 @@ ngx_http_lua_ffi_ssl_set_der_certificate(ngx_http_request_t *r,
 
     if (SSL_use_certificate(ssl_conn, x509) == 0) {
         *err = "SSL_use_certificate() failed";
+        
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "ssl cert: set der certificate failed: %d", SSL_get_error(ssl_conn, 0));
         goto failed;
     }
 
@@ -1439,6 +1442,9 @@ ngx_http_lua_ffi_set_cert(ngx_http_request_t *r,
 
     if (SSL_use_certificate(ssl_conn, x509) == 0) {
         *err = "SSL_use_certificate() failed";
+        
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "ssl cert: set certificate failed: %d", SSL_get_error(ssl_conn, 0));
         goto failed;
     }
 
