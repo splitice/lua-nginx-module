@@ -745,7 +745,7 @@ ngx_http_lua_ffi_ssl_set_protocols(ngx_http_request_t *r,
         return NGX_ERROR;
     }
 
-#if OPENSSL_VERSION_NUMBER >= 0x009080dfL
+#if OPENSSL_VERSION_NUMBER >= 0x009080dfL || defined(OPENSSL_IS_AWSLC)
     /* only in 0.9.8m+ */
     SSL_clear_options(ssl_conn,
                       SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|SSL_OP_NO_TLSv1);
