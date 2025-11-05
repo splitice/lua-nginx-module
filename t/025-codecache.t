@@ -7,94 +7,98 @@ use File::Basename;
 repeat_each(2);
 
 plan tests => repeat_each() * 198;
+my $prefix = <<'EOF';
+code cache lookup (key='content_by_lua_nhli_56ca4388611109b6ecfdeada050c8024', ref=-1)
+code cache miss (key='content_by_lua_nhli_56ca4388611109b6ecfdeada050c8024', ref=-1)
+code cache lookup (key='balancer_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='balancer_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+EOF
 
-#$ENV{LUA_PATH} = $ENV{HOME} . '/work/JSON4Lua-0.9.30/json/?.lua';
-$ENV{TEST_NGINX_HTML_DIR} ||= html_dir();
-$ENV{TEST_NGINX_CERT_DIR} ||= dirname(realpath(abs_path(__FILE__)));
+my $fetch_before_cert = <<'EOF';
+code cache lookup (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache hit (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+EOF
 
-no_long_string();
+my $fetch_after_cert = <<'EOF';
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache hit (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache lookup (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+EOF
 
-our $HtmlDir = html_dir;
+my $first_tail = <<'EOF';
+code cache lookup (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+code cache hit (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+code cache lookup (key='set_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='set_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='rewrite_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='rewrite_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='access_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='access_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='content_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='content_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='header_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='header_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='body_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='body_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache lookup (key='log_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+code cache miss (key='log_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=-1)
+EOF
 
-$ENV{TEST_NGINX_MEMCACHED_PORT} ||= 11211;
+my $second_append = <<'EOF';
+code cache lookup (key='content_by_lua_nhli_56ca4388611109b6ecfdeada050c8024', ref=1)
+code cache hit (key='content_by_lua_nhli_56ca4388611109b6ecfdeada050c8024', ref=1)
+code cache lookup (key='balancer_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=2)
+code cache hit (key='balancer_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=2)
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache hit (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache lookup (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+code cache hit (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+EOF
 
-check_accum_error_log();
-run_tests();
+my $fetch_hit_before_cert = <<'EOF';
+code cache lookup (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=5)
+code cache hit (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=5)
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache hit (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+EOF
 
-__DATA__
+my $fetch_hit_after_cert = <<'EOF';
+code cache lookup (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache hit (key='ssl_certificate_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=3)
+code cache lookup (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=5)
+code cache hit (key='ssl_session_fetch_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=5)
+EOF
 
-=== TEST 1: code cache on by default
---- config
-    location /lua {
-        content_by_lua_file html/test.lua;
-    }
-    location /update {
-        content_by_lua '
-            -- os.execute("(echo HERE; pwd) > /dev/stderr")
-            local f = assert(io.open("$TEST_NGINX_SERVER_ROOT/html/test.lua", "w"))
-            f:write("ngx.say(101)")
-            f:close()
-            ngx.say("updated")
-        ';
-    }
-    location /main {
-        echo_location /lua;
-        echo_location /update;
-        echo_location /lua;
-    }
---- user_files
->>> test.lua
-ngx.say(32)
---- request
-GET /main
---- response_body
-32
-updated
-32
---- no_error_log
-[alert]
+my $second_tail = <<'EOF';
+code cache lookup (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+code cache hit (key='ssl_session_store_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=4)
+code cache lookup (key='set_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=6)
+code cache hit (key='set_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=6)
+code cache lookup (key='rewrite_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=7)
+code cache hit (key='rewrite_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=7)
+code cache lookup (key='access_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=8)
+code cache hit (key='access_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=8)
+code cache lookup (key='content_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=9)
+code cache hit (key='content_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=9)
+code cache lookup (key='header_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=10)
+code cache hit (key='header_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=10)
+code cache lookup (key='body_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=11)
+code cache hit (key='body_filter_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=11)
+code cache lookup (key='log_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=12)
+code cache hit (key='log_by_lua_nhli_8a9441d0a30531ba8bb34ab11c55cfc3', ref=12)
+EOF
 
+my $first = qr/\A\Q$prefix\E(?:\Q$fetch_before_cert\E|\Q$fetch_after_cert\E)\Q$first_tail\E\z/s;
+my $second = qr/\A\Q$prefix\E(?:\Q$fetch_before_cert\E|\Q$fetch_after_cert\E)\Q$first_tail\E\Q$second_append\E(?:\Q$fetch_hit_before_cert\E|\Q$fetch_hit_after_cert\E)\Q$second_tail\E\z/s;
 
-
-=== TEST 2: code cache explicitly on
---- config
-    location /lua {
-        lua_code_cache on;
-        content_by_lua_file html/test.lua;
-    }
-    location /update {
-        content_by_lua '
-            -- os.execute("(echo HERE; pwd) > /dev/stderr")
-            local f = assert(io.open("$TEST_NGINX_SERVER_ROOT/html/test.lua", "w"))
-            f:write("ngx.say(101)")
-            f:close()
-            ngx.say("updated")
-        ';
-    }
-    location /main {
-        echo_location /lua;
-        echo_location /update;
-        echo_location /lua;
-    }
---- user_files
->>> test.lua
-ngx.say(32)
---- request
-GET /main
---- response_body
-32
-updated
-32
---- no_error_log
-[alert]
-
-
-
-=== TEST 3: code cache explicitly off
---- config
-    location /lua {
-        lua_code_cache off;
-        content_by_lua_file html/test.lua;
+[$first, $second]
     }
     location /update {
         content_by_lua '
