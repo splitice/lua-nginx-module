@@ -593,7 +593,10 @@ ngx_http_lua_ffi_ssl_clear_certs(ngx_http_request_t *r, char **err)
         return NGX_ERROR;
     }
 
-    SSL_certs_clear(ssl_conn);
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "ssl cert: ignoring clear request");
+
+    *err = NULL;
     return NGX_OK;
 
 #   endif  /* OPENSSL_VERSION_NUMBER < 0x1000205fL */
@@ -663,6 +666,8 @@ ngx_http_lua_ffi_ssl_set_der_certificate(ngx_http_request_t *r,
 
     X509_free(x509);
     x509 = NULL;
+
+    SSL_clear_chain_certs(ssl_conn);
 
     /* read rest of the chain */
 
@@ -1449,6 +1454,8 @@ ngx_http_lua_ffi_set_cert(ngx_http_request_t *r,
     }
 
     x509 = NULL;
+
+    SSL_clear_chain_certs(ssl_conn);
 
     /* read rest of the chain */
 
