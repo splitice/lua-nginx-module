@@ -10,8 +10,6 @@
 #endif
 #include "ddebug.h"
 
-#include <openssl/ssl.h>
-
 #include "ngx_http_lua_directive.h"
 #include "ngx_http_lua_capturefilter.h"
 #include "ngx_http_lua_contentby.h"
